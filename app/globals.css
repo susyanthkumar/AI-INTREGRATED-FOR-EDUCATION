@@ -1,0 +1,49 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: Arial, "Helvetica Neue", sans-serif;
+  --color-ink: #191b2a;
+  --color-violet-25: #faf9ff;
+  --color-violet-50: #f3f0ff;
+  --color-violet-100: #e8e2ff;
+  --color-violet-500: #7357e8;
+  --color-violet-600: #6344d6;
+  --color-violet-700: #5134bc;
+  --shadow-soft: 0 18px 55px rgba(31, 24, 67, 0.08);
+  --shadow-card: 0 5px 24px rgba(31, 24, 67, 0.055);
+}
+
+:root {
+  color-scheme: light;
+  --ink: #191b2a;
+  --muted: #77788a;
+  --line: #ecebf2;
+  --violet: #7357e8;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  color: var(--ink);
+  background: #faf9fc;
+  font-family: Arial, "Helvetica Neue", sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+button, input, select { font: inherit; }
+button { cursor: pointer; }
+::selection { background: #e8e2ff; color: #38278c; }
+
+.app-grid {
+  background-image: radial-gradient(rgba(115, 87, 232, .13) .7px, transparent .7px);
+  background-size: 22px 22px;
+}
+.range-input { accent-color: #7357e8; }
+.range-input::-webkit-slider-thumb { box-shadow: 0 0 0 5px rgba(115, 87, 232, .12); }
+.progress-ring { transform: rotate(-90deg); }
+.thin-scrollbar::-webkit-scrollbar { width: 5px; }
+.thin-scrollbar::-webkit-scrollbar-thumb { background: #ded9ee; border-radius: 8px; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}
