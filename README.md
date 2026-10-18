@@ -2,21 +2,22 @@
 
 ### Engineering admissions, made clearer.
 
-Pathwise is an AI-enabled family decision-support prototype that helps students and parents explore engineering-college options together. It turns academic details, entrance-exam results, family priorities, and affordability into a shortlist that is easier to discuss.
+Pathwise is an engineering education decision-support prototype for students and families. Its learning dashboard brings academics, study planning, career exploration, wellbeing, and college choices into one place.
 
 ![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=nextdotjs) ![React](https://img.shields.io/badge/React-19-149eca?logo=react) ![TypeScript](https://img.shields.io/badge/TypeScript-5-3178c6?logo=typescript) ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4-06b6d4?logo=tailwindcss)
 
 ## What it does
 
-- **Supports both students and parents** with a guided admissions-planning flow.
-- **Builds an academic profile** from Class 10/12 details and AP/Telangana EAPCET, JEE Main, and JEE Advanced results.
-- **Personalizes a college shortlist** using rank, region, category, preferences, and family priorities.
-- **Makes trade-offs visible** with dream/realistic/safe groupings, estimated fees, placement indicators, and adjustable recommendation weights.
-- **Helps families compare options** with an indicative cost-versus-earnings view.
+- **Learning dashboard** for academic strengths, study rhythm, weekly goals, and upcoming tasks.
+- **Study planner and progress view** with editable sessions, completion tracking, and goal progress.
+- **Engineering college comparison** with adjustable family priorities for affordability, location, branch fit, and placements.
+- **Career and resource guides** for engineering pathways, exam preparation, admissions, and family conversations.
+- **Wellbeing tools** with a focus timer and daily check-in.
+- **AI-advisor demo** with sample guidance for study planning, admissions questions, and career exploration.
 
 ## Preview
 
-Start the app locally to explore the student and parent flows and generate a personalized shortlist.
+Start the app locally to explore the dashboard. Navigation, task tracking, college priorities, the focus timer, check-in, resource search, and advisor demo are interactive.
 
 ## Run locally
 
@@ -42,7 +43,7 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ## How recommendations work
 
-This repository currently contains a **front-end prototype**. College data and cutoffs are illustrative, and recommendation scores are calculated in the browser from the sample dataset and the preferences entered. There is no live counselling database or connected AI service in this version.
+This repository currently contains a **front-end prototype**. College data and cutoffs are illustrative, and recommendation scores are calculated in the browser from a sample dataset and the preferences entered. The advisor uses predefined demo responses; there is no live counselling database or connected AI service in this version. Data entered in the profile remains in the current browser session.
 
 Treat every admission chance, cutoff, fee, and placement figure as an estimate for demonstration. Confirm current-year information, eligibility, and seat rules with official counselling authorities and colleges before making decisions.
 

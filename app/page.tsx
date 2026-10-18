@@ -1,323 +1,312 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react";
 import {
-  ArrowDown, ArrowLeft, ArrowRight, ArrowUpRight, Award, Banknote, BookOpen, Building2,
-  Check, CheckCircle2, ChevronDown, CircleHelp, Compass, GraduationCap, Heart, IndianRupee,
-  MapPin, Menu, ShieldCheck, SlidersHorizontal, Sparkles, Target, TrendingUp, Users, Wallet,
+  Activity, ArrowDownRight, ArrowRight, ArrowUpRight, BookOpen, BrainCircuit, BriefcaseBusiness,
+  CalendarDays, Check, ChevronDown, CircleHelp, Clock3, Compass, GraduationCap, Heart, Home,
+  Lightbulb, Menu, MessageCircle, MoreHorizontal, Plus, Search, Send, Settings2, ShieldCheck,
+  Sparkles, Target, Timer, TrendingUp, Users, X, Zap,
 } from "lucide-react";
 
-type Persona = "student" | "parent";
-type Step = "welcome" | "academics" | "diagnostic" | "dashboard";
-type Category = "OC" | "EWS" | "BC" | "SC" | "ST";
-type Region = "AU" | "SVU" | "OU" | "Open";
-type Entrance = "eapcet" | "jee" | "advanced";
+type View = "overview" | "academics" | "planner" | "progress" | "advisor" | "careers" | "family" | "wellbeing" | "resources";
+type StudyTask = { title: string; subject: string; time: string; done: boolean };
 
-type AcademicProfile = {
-  board: string; tenth: string; group: string; pcm: string; jeeApplication: string;
-  jeePercentile: string; jeeRank: string; examState: string; eapcetMarks: string;
-  eapcetRank: string; advancedQualified: string; advancedRank: string; region: Region;
-  category: Category; bcSubcategory: string; girlsQuota: boolean; reimbursement: boolean;
-};
-
-type College = {
-  name: string; code: string; city: string; region: Region; branch: string;
-  entrance: Entrance; cutoff: number; categoryRelaxation: number; fees: number;
-  package: number; placement: number; branchFit: number; safety: number; brand: number;
-  accent: string; badge: string;
-};
-
-const initialProfile: AcademicProfile = {
-  board: "CBSE", tenth: "", group: "MPC", pcm: "", jeeApplication: "", jeePercentile: "",
-  jeeRank: "", examState: "Andhra Pradesh", eapcetMarks: "", eapcetRank: "",
-  advancedQualified: "No", advancedRank: "", region: "AU", category: "OC",
-  bcSubcategory: "BC-A", girlsQuota: false, reimbursement: false,
-};
-
-const colleges: College[] = [
-  { name: "IIT Hyderabad", code: "IITH", city: "Hyderabad", region: "OU", branch: "Computer Science", entrance: "advanced", cutoff: 850, categoryRelaxation: 0.35, fees: 280000, package: 2200000, placement: 96, branchFit: 98, safety: 91, brand: 99, accent: "from-orange-500 to-rose-500", badge: "IIT" },
-  { name: "NIT Warangal", code: "NITW", city: "Warangal", region: "OU", branch: "Computer Science", entrance: "jee", cutoff: 4200, categoryRelaxation: 0.55, fees: 175000, package: 1850000, placement: 94, branchFit: 97, safety: 92, brand: 97, accent: "from-rose-500 to-orange-400", badge: "NIT" },
-  { name: "JNTU Hyderabad", code: "JNTUH", city: "Hyderabad", region: "OU", branch: "Computer Science", entrance: "eapcet", cutoff: 1800, categoryRelaxation: 0.38, fees: 65000, package: 950000, placement: 86, branchFit: 96, safety: 86, brand: 91, accent: "from-violet-600 to-indigo-500", badge: "Top pick" },
-  { name: "College of Engineering, AU", code: "AUCE", city: "Visakhapatnam", region: "AU", branch: "Computer Science", entrance: "eapcet", cutoff: 1450, categoryRelaxation: 0.42, fees: 60000, package: 920000, placement: 84, branchFit: 96, safety: 91, brand: 93, accent: "from-blue-600 to-cyan-500", badge: "University" },
-  { name: "JNTU Kakinada", code: "JNTUK", city: "Kakinada", region: "AU", branch: "Computer Science", entrance: "eapcet", cutoff: 2600, categoryRelaxation: 0.45, fees: 60000, package: 780000, placement: 80, branchFit: 95, safety: 89, brand: 89, accent: "from-indigo-600 to-blue-500", badge: "Strong fit" },
-  { name: "CBIT", code: "CBIT", city: "Hyderabad", region: "OU", branch: "Computer Science", entrance: "eapcet", cutoff: 900, categoryRelaxation: 0.34, fees: 140000, package: 1100000, placement: 89, branchFit: 97, safety: 87, brand: 91, accent: "from-emerald-500 to-teal-500", badge: "Industry ready" },
-  { name: "Vasavi College of Engineering", code: "VASV", city: "Hyderabad", region: "OU", branch: "Computer Science", entrance: "eapcet", cutoff: 1250, categoryRelaxation: 0.36, fees: 135000, package: 1000000, placement: 88, branchFit: 96, safety: 90, brand: 89, accent: "from-amber-500 to-orange-400", badge: "Student favorite" },
-  { name: "VR Siddhartha Engineering College", code: "VRSEC", city: "Vijayawada", region: "AU", branch: "Computer Science", entrance: "eapcet", cutoff: 3400, categoryRelaxation: 0.43, fees: 95000, package: 720000, placement: 77, branchFit: 94, safety: 91, brand: 83, accent: "from-sky-500 to-blue-500", badge: "Great community" },
-  { name: "SVU College of Engineering", code: "SVUCE", city: "Tirupati", region: "SVU", branch: "Computer Science", entrance: "eapcet", cutoff: 3100, categoryRelaxation: 0.44, fees: 55000, package: 710000, placement: 76, branchFit: 94, safety: 93, brand: 86, accent: "from-fuchsia-500 to-violet-500", badge: "University" },
+const navigation: { id: View; label: string; icon: typeof Home; group: string }[] = [
+  { id: "overview", label: "Overview", icon: Home, group: "LEARNING" },
+  { id: "academics", label: "Academics", icon: BookOpen, group: "LEARNING" },
+  { id: "planner", label: "Study planner", icon: CalendarDays, group: "LEARNING" },
+  { id: "progress", label: "Progress", icon: TrendingUp, group: "LEARNING" },
+  { id: "advisor", label: "AI advisor", icon: BrainCircuit, group: "SUPPORT" },
+  { id: "careers", label: "Career guidance", icon: Compass, group: "SUPPORT" },
+  { id: "family", label: "Family decisions", icon: Users, group: "SUPPORT" },
+  { id: "wellbeing", label: "Wellbeing", icon: Heart, group: "SUPPORT" },
+  { id: "resources", label: "Resources", icon: Lightbulb, group: "SUPPORT" },
 ];
 
-const questions = [
-  { eyebrow: "Your interests", title: "Which engineering spaces spark your curiosity?", type: "domain", options: ["Software & AI", "Electronics & robotics", "Mechanical & automotive", "Civil & infrastructure"] },
-  { eyebrow: "Your priorities", title: "What matters more in your college choice?", type: "tradeoff", options: ["Computer Science at a growing college", "A core branch at a top university", "I’m open to either — show me the best fit"] },
-  { eyebrow: "Family finances", title: "What annual out-of-pocket budget feels comfortable?", type: "budget", options: ["Under ₹1.5 lakh", "₹1.5–3.5 lakh", "Above ₹3.5 lakh"] },
-  { eyebrow: "Your home base", title: "How far from home would you feel comfortable studying?", type: "distance", options: ["Within my district", "Within 300 km", "Anywhere in India"] },
-  { eyebrow: "Life after college", title: "What’s your current post-graduation direction?", type: "goal", options: ["Industry placements", "Higher studies · M.Tech / MS", "Civil services or government roles"] },
-  { eyebrow: "A shared decision", title: "What should your family weigh most heavily?", type: "values", options: ["Campus safety", "Hostel & student life", "Coding culture", "NIRF ranking"] },
-] as const;
+const subjects = [
+  { name: "Mathematics", score: 82, color: "#5b75e8", detail: "Functions · Calculus · Vectors" },
+  { name: "Physics", score: 74, color: "#16a6a1", detail: "Mechanics · Electricity · Optics" },
+  { name: "Chemistry", score: 91, color: "#f19a44", detail: "Organic · Inorganic · Physical" },
+];
 
-type Answers = { domain: string; tradeoff: string; budget: string; loan: boolean; distance: string; goal: string; values: string[]; ratings: Record<string, number> };
-type Weights = { placement: number; affordability: number; location: number; branch: number };
+const colleges = [
+  { name: "JNTU Hyderabad", branch: "Computer Science", place: "Hyderabad, Telangana", fit: 92, chance: "Realistic", fee: "₹65k", color: "#5b75e8" },
+  { name: "College of Engineering, AU", branch: "Computer Science", place: "Visakhapatnam, Andhra Pradesh", fit: 87, chance: "Realistic", fee: "₹60k", color: "#16a6a1" },
+  { name: "NIT Warangal", branch: "Electrical Engineering", place: "Warangal, Telangana", fit: 78, chance: "Dream", fee: "₹1.75L", color: "#efa045" },
+];
 
-const initialAnswers: Answers = { domain: "", tradeoff: "", budget: "", loan: false, distance: "", goal: "", values: [], ratings: {} };
-const initialWeights: Weights = { placement: 32, affordability: 26, location: 16, branch: 26 };
-const formatINR = (value: number) => value >= 100000 ? `₹${(value / 100000).toFixed(value % 100000 ? 1 : 0)}L` : `₹${Math.round(value / 1000)}k`;
+const resources = [
+  { title: "EAPCET counselling checklist", type: "Admissions", read: "8 min", icon: GraduationCap, color: "blue" },
+  { title: "JEE revision: a 14-day plan", type: "Study guide", read: "6 min", icon: BookOpen, color: "violet" },
+  { title: "Questions to ask on a campus visit", type: "Family guide", read: "5 min", icon: Users, color: "amber" },
+  { title: "Choosing a branch that fits you", type: "Career guide", read: "7 min", icon: Compass, color: "teal" },
+  { title: "Exam-week wellbeing toolkit", type: "Wellbeing", read: "4 min", icon: Heart, color: "rose" },
+  { title: "Understanding college costs", type: "Family guide", read: "9 min", icon: ShieldCheck, color: "green" },
+];
 
-function Field({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
-  return <label className="block"><span className="mb-2 block text-[13px] font-semibold text-slate-700">{label}</span>{children}{hint && <span className="mt-1.5 block text-[11px] text-slate-400">{hint}</span>}</label>;
+const careers = [
+  { title: "Software & AI", tag: "Technology", description: "Build software, intelligent tools, and the systems behind everyday products.", skills: ["Programming", "Problem solving", "Data thinking"], icon: BrainCircuit, color: "blue" },
+  { title: "Robotics & embedded systems", tag: "Hardware + software", description: "Connect code with sensors, devices, automation, and the physical world.", skills: ["Electronics", "C++", "Design"], icon: Zap, color: "violet" },
+  { title: "Civil & sustainable infrastructure", tag: "Built environment", description: "Plan and build safer, more resilient places for people to live and work.", skills: ["Physics", "Planning", "Teamwork"], icon: BriefcaseBusiness, color: "teal" },
+];
+
+const titleFor: Record<View, { title: string; subtitle: string }> = {
+  overview: { title: "Your learning dashboard", subtitle: "A clear view of your studies, goals, and next steps." },
+  academics: { title: "Academic snapshot", subtitle: "See what is going well and where a little more practice could help." },
+  planner: { title: "Study planner", subtitle: "Make a realistic plan for the week, one session at a time." },
+  progress: { title: "Your progress", subtitle: "Small, steady steps add up. Here is your progress so far." },
+  advisor: { title: "AI study advisor", subtitle: "Get a starting point for study, admissions, or family questions." },
+  careers: { title: "Career guidance", subtitle: "Explore a few engineering pathways and the skills behind them." },
+  family: { title: "Decide together", subtitle: "Compare college options around what matters to your family." },
+  wellbeing: { title: "Wellbeing check-in", subtitle: "Take care of your energy while you work toward your goals." },
+  resources: { title: "Resource library", subtitle: "Practical guides for exams, admissions, careers, and family planning." },
+};
+
+function cn(...values: (string | false | undefined)[]) { return values.filter(Boolean).join(" "); }
+
+function Card({ children, className = "" }: { children: ReactNode; className?: string }) {
+  return <section className={cn("rounded-2xl border border-slate-200/80 bg-white shadow-[0_3px_14px_rgba(24,42,77,.035)]", className)}>{children}</section>;
 }
 
-function SelectInput({ value, onChange, options, placeholder }: { value: string; onChange: (value: string) => void; options: string[]; placeholder?: string }) {
-  return <div className="relative"><select value={value} onChange={(event) => onChange(event.target.value)} className="w-full appearance-none rounded-xl border border-slate-200 bg-white px-3.5 py-3 pr-10 text-sm text-slate-700 outline-none transition focus:border-violet-400 focus:ring-4 focus:ring-violet-50">
-    {placeholder && <option value="">{placeholder}</option>}{options.map((option) => <option key={option}>{option}</option>)}
-  </select><ChevronDown size={15} className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400" /></div>;
+function SectionTitle({ title, action }: { title: string; action?: ReactNode }) {
+  return <div className="mb-4 flex items-center justify-between gap-3"><h2 className="text-[15px] font-semibold tracking-[-.02em] text-slate-900">{title}</h2>{action}</div>;
 }
 
-function TextInput({ value, onChange, placeholder, type = "text" }: { value: string; onChange: (value: string) => void; placeholder: string; type?: string }) {
-  return <input value={value} onChange={(event) => onChange(event.target.value)} type={type} placeholder={placeholder} className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-3 text-sm text-slate-700 outline-none transition placeholder:text-slate-300 focus:border-violet-400 focus:ring-4 focus:ring-violet-50" />;
+function ProgressBar({ value, color = "bg-blue-600" }: { value: number; color?: string }) {
+  return <div className="h-2 overflow-hidden rounded-full bg-slate-100"><div className={cn("h-full rounded-full transition-all", color)} style={{ width: `${Math.max(0, Math.min(100, value))}%` }} /></div>;
 }
 
-function Brand({ inverse = false }: { inverse?: boolean }) {
-  return <div className="flex items-center gap-2.5"><span className={`flex h-9 w-9 items-center justify-center rounded-xl ${inverse ? "bg-white/15 text-white" : "bg-violet-100 text-violet-700"}`}><Compass size={19} strokeWidth={2.2} /></span><span className={`text-[19px] font-bold tracking-[-.045em] ${inverse ? "text-white" : "text-slate-900"}`}>pathwise<span className={inverse ? "text-violet-200" : "text-violet-600"}>.</span></span></div>;
+function SmallLink({ children, onClick }: { children: ReactNode; onClick: () => void }) {
+  return <button onClick={onClick} className="inline-flex items-center gap-1 text-xs font-semibold text-blue-700 transition hover:text-blue-900">{children}<ArrowRight size={13} /></button>;
 }
 
-export default function Home() {
-  const [step, setStep] = useState<Step>("welcome");
-  const [persona, setPersona] = useState<Persona>("student");
-  const [profile, setProfile] = useState<AcademicProfile>(initialProfile);
-  const [question, setQuestion] = useState(0);
-  const [answers, setAnswers] = useState<Answers>(initialAnswers);
-  const [weights, setWeights] = useState<Weights>(initialWeights);
-  const [showAll, setShowAll] = useState(false);
-  const [mobileMenu, setMobileMenu] = useState(false);
+export default function HomePage() {
+  const [view, setView] = useState<View>("overview");
+  const [mobileNav, setMobileNav] = useState(false);
+  const [rank, setRank] = useState("4200");
+  const [region, setRegion] = useState("AU region");
+  const [query, setQuery] = useState("");
+  const [tasks, setTasks] = useState([
+    { title: "Revise integration techniques", subject: "Mathematics", time: "Today · 4:30 PM", done: false },
+    { title: "Finish electrostatics practice", subject: "Physics", time: "Today · 6:00 PM", done: false },
+    { title: "Review organic chemistry notes", subject: "Chemistry", time: "Tomorrow · 9:00 AM", done: true },
+  ]);
+  const [taskTitle, setTaskTitle] = useState("");
+  const [chatInput, setChatInput] = useState("");
+  const [chatMessages, setChatMessages] = useState<{ role: "assistant" | "user"; text: string }[]>([
+    { role: "assistant", text: "Hi! I can help you break a study goal into smaller steps, think through engineering branches, or prepare questions for a college conversation. What would be useful right now?" },
+  ]);
+  const [selectedMood, setSelectedMood] = useState("Okay");
+  const [focusSeconds, setFocusSeconds] = useState(25 * 60);
+  const [focusRunning, setFocusRunning] = useState(false);
+  const [savedResources, setSavedResources] = useState<string[]>([]);
+  const [priorities, setPriorities] = useState({ affordability: 70, location: 55, branch: 85, placements: 65 });
+  const [selectedCollege, setSelectedCollege] = useState(colleges[0].name);
 
-  const updateProfile = <K extends keyof AcademicProfile>(key: K, value: AcademicProfile[K]) => setProfile((current) => ({ ...current, [key]: value }));
-  const selectedBranch = answers.domain === "Electronics & robotics" ? "Electronics & Communication" : answers.domain === "Mechanical & automotive" ? "Mechanical" : answers.domain === "Civil & infrastructure" ? "Civil" : "Computer Science";
-  const fitIndex = useMemo(() => {
-    const pcm = Math.min(100, Math.max(0, Number(profile.pcm) || 0));
-    const rank = Number(profile.eapcetRank) || Number(profile.jeeRank) || 25000;
-    const rankScore = profile.eapcetRank ? Math.max(25, 100 - Math.log10(Math.max(rank, 1)) * 14) : profile.jeePercentile ? Number(profile.jeePercentile) : 62;
-    const diagnostics = (answers.domain ? 20 : 0) + (answers.goal ? 20 : 0) + (answers.tradeoff ? 20 : 0) + (answers.budget ? 20 : 0) + (answers.distance ? 10 : 0) + (answers.values.length ? 10 : 0);
-    return Math.round(Math.min(100, Math.max(0, pcm * 0.35 + rankScore * 0.4 + diagnostics * 0.25)));
-  }, [profile.pcm, profile.eapcetRank, profile.jeeRank, profile.jeePercentile, answers]);
+  useEffect(() => {
+    if (!focusRunning) return;
+    const timer = window.setInterval(() => setFocusSeconds((current) => {
+      if (current <= 1) { setFocusRunning(false); return 0; }
+      return current - 1;
+    }), 1000);
+    return () => window.clearInterval(timer);
+  }, [focusRunning]);
 
-  const rankedColleges = useMemo(() => {
-    const applicantRank = (entrance: Entrance) => {
-      if (entrance === "advanced") return Number(profile.advancedRank) || 16000;
-      if (entrance === "jee") return Number(profile.jeeRank) || (profile.jeePercentile ? Math.max(1000, Math.round((100 - Number(profile.jeePercentile)) * 12000)) : 18000);
-      return Number(profile.eapcetRank) || 18000;
-    };
-    const categoryFactor = profile.category === "SC" ? 2.45 : profile.category === "ST" ? 2.8 : profile.category === "BC" ? 1.55 : profile.category === "EWS" ? 1.2 : 1;
-    return colleges.map((college) => {
-      const regionFactor = college.region === profile.region ? 1.12 : profile.region === "Open" ? 1 : 0.88;
-      const girlFactor = profile.girlsQuota ? 1.08 : 1;
-      const cutoff = college.cutoff * (1 + (categoryFactor - 1) * college.categoryRelaxation) * regionFactor * girlFactor;
-      const rank = applicantRank(college.entrance);
-      const probability = Math.max(3, Math.min(96, Math.round(50 + (cutoff - rank) / Math.max(cutoff * 0.55, 1) * 40)));
-      const effectiveFees = profile.reimbursement && college.fees <= 100000 ? Math.max(0, college.fees - 70000) : college.fees;
-      const budgetCeiling = (answers.budget === "Under ₹1.5 lakh" ? 150000 : answers.budget === "₹1.5–3.5 lakh" ? 350000 : answers.budget === "Above ₹3.5 lakh" ? 500000 : 250000) + (answers.loan ? 100000 : 0);
-      const feeScore = Math.max(5, Math.min(100, 100 - (effectiveFees / budgetCeiling) * 15 - (Math.max(0, effectiveFees - budgetCeiling) / budgetCeiling) * 50));
-      const locationScore = college.region === profile.region ? 92 : profile.region === "Open" ? 74 : 65;
-      const branchScore = answers.domain ? Math.max(35, college.branch.includes(selectedBranch.split(" ")[0]) ? college.branchFit : college.branchFit - 27) : college.branchFit;
-      const weightTotal = weights.placement + weights.affordability + weights.location + weights.branch;
-      const weightedScore = college.placement * weights.placement + feeScore * weights.affordability + locationScore * weights.location + branchScore * weights.branch;
-      const suitability = Math.round(weightTotal === 0 ? (college.placement + feeScore + locationScore + branchScore) / 4 : weightedScore / weightTotal);
-      return { ...college, probability, suitability, effectiveFees, cutoff: Math.round(cutoff) };
-    }).sort((a, b) => b.suitability - a.suitability);
-  }, [profile, answers.domain, answers.budget, answers.loan, selectedBranch, weights]);
+  const filteredResources = useMemo(() => resources.filter((item) => `${item.title} ${item.type}`.toLowerCase().includes(query.toLowerCase())), [query]);
+  const recommended = useMemo(() => {
+    const rankValue = Number(rank) || 4200;
+    const average = (priorities.affordability + priorities.location + priorities.branch + priorities.placements) / 4;
+    return colleges.map((college, index) => ({ ...college, fit: Math.max(55, Math.min(98, Math.round(college.fit + (average - 65) / 5 - index * (rankValue > 5000 ? 2 : 0)))) })).sort((a, b) => b.fit - a.fit);
+  }, [priorities, rank]);
 
-  const alignmentScore = useMemo(() => {
-    let score = 72;
-    if (answers.budget === "Under ₹1.5 lakh" && profile.reimbursement) score += 9;
-    if (answers.distance === "Within my district" && profile.region !== "Open") score += 5;
-    if (answers.values.includes("Campus safety")) score += 6;
-    if (answers.goal === "Industry placements" && answers.domain === "Software & AI") score += 5;
-    return Math.min(97, score);
-  }, [answers, profile.reimbursement, profile.region]);
-
-  const recommended = showAll ? rankedColleges : rankedColleges.slice(0, 6);
-  const answerValue = (type: typeof questions[number]["type"]) => {
-    if (type === "values") return answers.values;
-    return answers[type];
+  const go = (next: View) => { setView(next); setMobileNav(false); window.scrollTo({ top: 0, behavior: "smooth" }); };
+  const sendChat = (event?: FormEvent) => {
+    event?.preventDefault();
+    const message = chatInput.trim();
+    if (!message) return;
+    const lower = message.toLowerCase();
+    const answer = lower.includes("study") || lower.includes("plan")
+      ? "Try a 25-minute focused session on one topic, followed by a five-minute break. Pick the smallest useful task first, then add a second session only if you still have energy."
+      : lower.includes("college") || lower.includes("admission") || lower.includes("rank")
+        ? "Start by comparing a balanced shortlist: one ambitious option, a few realistic options, and a safer choice. Check the latest official cutoff, fees, branch details, and counselling rules before deciding."
+        : lower.includes("career") || lower.includes("branch")
+          ? "A good next step is to compare the day-to-day work, core subjects, and projects in each field. Try one small project or beginner lesson before narrowing your options."
+          : "Break this into one small next step. Write down what you know, what you still need to check, and who could help you verify it. I can help you turn that into a short plan.";
+    setChatMessages((items) => [...items, { role: "user", text: message }, { role: "assistant", text: answer }]);
+    setChatInput("");
   };
-  const setAnswer = (type: typeof questions[number]["type"], value: string) => {
-    if (type === "values") setAnswers((current) => {
-      const values = current.values.includes(value) ? current.values.filter((item) => item !== value) : [...current.values, value];
-      return { ...current, values, ratings: { ...current.ratings, [value]: values.includes(value) ? (current.ratings[value] || 3) : 0 } };
-    });
-    else setAnswers((current) => ({ ...current, [type]: value }));
+
+  const addTask = (event: FormEvent) => {
+    event.preventDefault();
+    if (!taskTitle.trim()) return;
+    setTasks((items) => [{ title: taskTitle.trim(), subject: "Personal goal", time: "This week", done: false }, ...items]);
+    setTaskTitle("");
   };
-  const setValueRating = (value: string, rating: number) => setAnswers((current) => ({
-    ...current,
-    values: current.values.includes(value) ? current.values : [...current.values, value],
-    ratings: { ...current.ratings, [value]: rating },
-  }));
+
+  const toggleResource = (title: string) => setSavedResources((items) => items.includes(title) ? items.filter((item) => item !== title) : [...items, title]);
+  const activeInfo = titleFor[view];
+
   return (
-    <main className="min-h-screen overflow-hidden bg-[#faf9fc]">
-      <header className="relative z-20 mx-auto flex h-[76px] max-w-[1440px] items-center justify-between px-5 sm:px-8 lg:px-12">
-        <Brand />
-        <div className="hidden items-center gap-8 text-[13px] font-medium text-slate-500 md:flex">
-          {step === "dashboard" ? <><span className="text-violet-700">Your shortlist</span><span>How it works</span><span>About us</span><button className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-slate-600"><CircleHelp size={15} /> Need a hand?</button></> : <><span>How it works</span><span>For families</span><span>About us</span><button onClick={() => { setPersona("parent"); setStep("academics"); }} className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-slate-600 transition hover:border-violet-200 hover:text-violet-700">I’m a parent</button></>}
+    <div className="min-h-screen bg-[#f4f7fb] text-slate-800">
+      {mobileNav && <button aria-label="Close menu overlay" onClick={() => setMobileNav(false)} className="fixed inset-0 z-30 bg-slate-950/35 lg:hidden" />}
+      <aside className={cn("fixed inset-y-0 left-0 z-40 flex w-[258px] flex-col bg-[#142744] text-slate-200 transition-transform duration-300 lg:translate-x-0", mobileNav ? "translate-x-0" : "-translate-x-full")}>
+        <div className="flex h-[76px] items-center justify-between border-b border-white/10 px-6">
+          <button onClick={() => go("overview")} className="flex items-center gap-3 text-left">
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-sky-400 to-blue-600 text-white shadow-lg shadow-blue-950/30"><GraduationCap size={22} /></span>
+            <span><span className="block text-[15px] font-bold tracking-tight text-white">Pathwise</span><span className="block text-[10px] font-medium tracking-[.16em] text-sky-300">EDUCATION</span></span>
+          </button>
+          <button aria-label="Close navigation" onClick={() => setMobileNav(false)} className="rounded-lg p-1 text-slate-400 hover:bg-white/10 lg:hidden"><X size={18} /></button>
         </div>
-        <button aria-label="Open navigation" onClick={() => setMobileMenu((open) => !open)} className="rounded-lg p-2 text-slate-600 md:hidden"><Menu size={21} /></button>
-        {mobileMenu && <div className="absolute right-5 top-[65px] z-30 flex min-w-48 flex-col gap-1 rounded-2xl border border-slate-100 bg-white p-2 shadow-soft md:hidden"><button onClick={() => setMobileMenu(false)} className="rounded-xl px-3 py-2.5 text-left text-sm text-slate-600">How it works</button><button onClick={() => { setPersona("parent"); setStep("academics"); setMobileMenu(false); }} className="rounded-xl px-3 py-2.5 text-left text-sm text-violet-700">I’m a parent</button></div>}
-      </header>
+        <div className="px-3 pt-5">
+          {(["LEARNING", "SUPPORT"] as const).map((group) => <div key={group} className="mb-5">
+            <div className="mb-2 px-3 text-[9px] font-bold tracking-[.16em] text-slate-500">{group}</div>
+            <nav className="space-y-1" aria-label={`${group.toLowerCase()} navigation`}>
+              {navigation.filter((item) => item.group === group).map(({ id, label, icon: Icon }) => <button key={id} onClick={() => go(id)} className={cn("group flex w-full items-center gap-3 rounded-xl px-3 py-[10px] text-left text-[12px] font-medium transition", view === id ? "bg-[#2678e8] text-white shadow-lg shadow-blue-950/20" : "text-slate-300 hover:bg-white/[.07] hover:text-white")}>
+                <Icon size={17} strokeWidth={1.8} className={cn(view === id ? "text-white" : "text-slate-400 group-hover:text-sky-300")} />{label}{id === "advisor" && <span className="ml-auto rounded-md bg-sky-400/15 px-1.5 py-0.5 text-[9px] text-sky-200">NEW</span>}
+              </button>)}
+            </nav>
+          </div>)}
+        </div>
+        <div className="mt-auto px-4 pb-4">
+          <div className="rounded-2xl border border-white/10 bg-white/[.055] p-4">
+            <div className="mb-2 flex items-center justify-between"><span className="text-[11px] font-semibold text-white">Your weekly goal</span><Target size={15} className="text-sky-300" /></div>
+            <div className="mb-2 flex items-end justify-between"><span className="text-[21px] font-bold text-white">8.5<span className="ml-1 text-[11px] font-medium text-slate-400">/ 12 hrs</span></span><span className="text-[10px] font-semibold text-emerald-300">71%</span></div>
+            <div className="h-1.5 overflow-hidden rounded-full bg-slate-700"><div className="h-full w-[71%] rounded-full bg-gradient-to-r from-sky-400 to-blue-400" /></div>
+            <button onClick={() => go("planner")} className="mt-3 text-[10px] font-semibold text-sky-300 hover:text-white">View study plan <ArrowRight size={11} className="ml-1 inline" /></button>
+          </div>
+          <button onClick={() => go("academics")} className="mt-3 flex w-full items-center gap-3 rounded-xl p-2 text-left transition hover:bg-white/[.07]">
+            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-amber-200 to-orange-400 text-[12px] font-bold text-[#4d351a]">S</span>
+            <span className="min-w-0 flex-1"><span className="block truncate text-[11px] font-semibold text-white">Student profile</span><span className="block text-[10px] text-slate-400">AP EAPCET · {region}</span></span><MoreHorizontal size={16} className="text-slate-400" />
+          </button>
+        </div>
+      </aside>
 
-      {step === "welcome" && (
-        <section className="relative mx-auto grid min-h-[calc(100vh-76px)] max-w-[1440px] items-center gap-12 px-5 pb-16 pt-7 sm:px-8 lg:grid-cols-[1.03fr_.97fr] lg:px-12 lg:pb-24 lg:pt-0">
-          <div className="absolute -left-52 top-[8%] h-[530px] w-[530px] rounded-full bg-violet-100/70 blur-[100px]" />
-          <div className="absolute right-[10%] top-[12%] h-[300px] w-[300px] rounded-full bg-blue-100/50 blur-[100px]" />
-          <div className="relative z-10 max-w-[610px] py-10 lg:py-0">
-            <div className="mb-7 inline-flex items-center gap-2 rounded-full border border-violet-100 bg-white/80 px-3.5 py-2 text-[11px] font-semibold tracking-wide text-violet-700 shadow-sm"><Sparkles size={14} /> A clearer way to choose what’s next</div>
-            <h1 className="max-w-[620px] text-[43px] font-semibold leading-[1.09] tracking-[-.055em] text-slate-900 sm:text-[58px] lg:text-[64px]">The right engineering college starts with <span className="text-violet-600">your story.</span></h1>
-            <p className="mt-6 max-w-[475px] text-[16px] leading-7 text-slate-500 sm:text-[17px]">Data-backed engineering admission decisions, made together. Find colleges that fit your rank, your budget, and the future you’re imagining.</p>
-            <div className="mt-9 flex flex-col gap-3 sm:flex-row">
-              <button onClick={() => { setPersona("student"); setStep("academics"); }} className="group inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-5 py-3.5 text-sm font-semibold text-white shadow-[0_8px_22px_rgba(99,68,214,.22)] transition hover:-translate-y-0.5 hover:bg-violet-700">I’m a student <ArrowRight size={16} className="transition group-hover:translate-x-0.5" /></button>
-              <button onClick={() => { setPersona("parent"); setStep("academics"); }} className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white/90 px-5 py-3.5 text-sm font-semibold text-slate-700 transition hover:border-violet-200 hover:text-violet-700"><Users size={16} /> I’m a parent</button>
-            </div>
-            <div className="mt-9 flex flex-wrap items-center gap-x-5 gap-y-3 text-[11px] text-slate-400"><span className="flex items-center gap-1.5"><ShieldCheck size={14} className="text-emerald-500" /> Your data stays private</span><span className="h-1 w-1 rounded-full bg-slate-300" /><span>No account needed</span><span className="h-1 w-1 rounded-full bg-slate-300" /><span>About 5 minutes</span></div>
+      <main className="min-h-screen lg:ml-[258px]">
+        <header className="sticky top-0 z-20 flex h-[76px] items-center justify-between border-b border-slate-200/80 bg-white/90 px-4 backdrop-blur-xl sm:px-7 lg:px-9">
+          <div className="flex items-center gap-3"><button aria-label="Open navigation" onClick={() => setMobileNav(true)} className="rounded-lg p-2 text-slate-600 hover:bg-slate-100 lg:hidden"><Menu size={20} /></button><div><div className="text-[10px] font-medium text-slate-400">Pathwise <span className="mx-1 text-slate-300">/</span> <span className="text-slate-600">{navigation.find((item) => item.id === view)?.label}</span></div><div className="mt-0.5 hidden text-[12px] font-semibold text-slate-700 sm:block">Engineering journey <ChevronDown size={13} className="ml-1 inline text-slate-400" /></div></div></div>
+          <div className="flex items-center gap-2 sm:gap-4">
+            <label className="hidden h-9 w-[205px] items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 md:flex"><Search size={14} className="text-slate-400" /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search resources..." className="min-w-0 flex-1 bg-transparent text-[11px] outline-none placeholder:text-slate-400" /><kbd className="rounded border border-slate-200 bg-white px-1 text-[9px] text-slate-400">⌘ K</kbd></label>
+            <button onClick={() => go("advisor")} aria-label="Ask Pathwise advisor" className="relative rounded-xl p-2.5 text-slate-500 transition hover:bg-blue-50 hover:text-blue-700"><MessageCircle size={18} /><span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full border-2 border-white bg-blue-500" /></button>
+            <div className="hidden h-8 w-px bg-slate-200 sm:block" />
+            <button onClick={() => go("academics")} className="flex items-center gap-2.5 rounded-xl p-1.5 pr-2 transition hover:bg-slate-50"><span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#e8efff] text-[11px] font-bold text-blue-700">ST</span><span className="hidden text-left sm:block"><span className="block text-[11px] font-semibold text-slate-700">Student</span><span className="block text-[9px] text-slate-400">My profile</span></span><ChevronDown size={13} className="hidden text-slate-400 sm:block" /></button>
+          </div>
+        </header>
+
+        <div className="mx-auto max-w-[1480px] px-4 pb-10 pt-6 sm:px-7 lg:px-9 lg:pt-8">
+          <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
+            <div><div className="mb-1.5 flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[.13em] text-blue-700"><span className="h-1.5 w-1.5 rounded-full bg-blue-500" /> YOUR PATH, AT YOUR PACE</div><h1 className="text-[25px] font-bold tracking-[-.04em] text-slate-900 sm:text-[29px]">{activeInfo.title}</h1><p className="mt-1 text-[12px] text-slate-500">{activeInfo.subtitle}</p></div>
+            <div className="flex items-center gap-2"><button onClick={() => go("planner")} className="hidden items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-[11px] font-semibold text-slate-600 shadow-sm transition hover:border-blue-200 hover:text-blue-700 sm:flex"><CalendarDays size={14} /> This week <ChevronDown size={13} /></button><button onClick={() => go("family")} className="inline-flex items-center gap-2 rounded-xl bg-blue-700 px-3.5 py-2.5 text-[11px] font-semibold text-white shadow-md shadow-blue-700/15 transition hover:bg-blue-800"><Users size={14} /> Family view</button></div>
           </div>
 
-          <div className="relative z-10 mx-auto w-full max-w-[590px]">
-            <div className="absolute -left-5 top-20 z-20 hidden rounded-2xl border border-slate-100 bg-white p-3.5 shadow-card sm:block">
-              <div className="flex items-center gap-3"><span className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600"><TrendingUp size={19} /></span><div><div className="text-[11px] text-slate-400">Placement outlook</div><div className="mt-0.5 text-sm font-semibold text-slate-800">Strong fit found</div></div><ArrowUpRight size={15} className="text-emerald-500" /></div>
-            </div>
-            <div className="absolute -right-2 bottom-16 z-20 hidden rounded-2xl border border-slate-100 bg-white p-3.5 shadow-card sm:block"><div className="flex items-center gap-3"><div className="flex -space-x-2"><div className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-violet-100 text-[10px] font-bold text-violet-700">S</div><div className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-amber-100 text-[10px] font-bold text-amber-700">P</div></div><div><div className="text-[11px] text-slate-400">Decisions made together</div><div className="text-sm font-semibold text-slate-800">92% aligned</div></div></div></div>
-            <div className="rounded-[30px] border border-white/80 bg-white/90 p-3 shadow-[0_35px_90px_rgba(61,45,113,.13)] backdrop-blur sm:p-4">
-              <div className="app-grid relative overflow-hidden rounded-[23px] bg-[#f6f4fb] p-5 sm:p-7">
-                <div className="relative z-10 flex items-center justify-between"><div><div className="text-xs font-medium text-slate-500">Your decision, made clearer</div><div className="mt-1 text-lg font-semibold tracking-tight text-slate-900">A shortlist that feels right</div></div><span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-violet-600 shadow-sm"><Target size={19} /></span></div>
-                <div className="relative z-10 mt-6 rounded-2xl border border-violet-100/70 bg-white p-4 shadow-sm">
-                  <div className="flex items-start justify-between"><div className="flex items-center gap-3"><div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-violet-600 to-indigo-500 text-sm font-bold text-white">AU</div><div><div className="text-sm font-semibold text-slate-800">Andhra University</div><div className="mt-0.5 text-[11px] text-slate-400">AUCE · Computer Science</div></div></div><span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-semibold text-emerald-700">Realistic</span></div>
-                  <div className="mt-4 grid grid-cols-3 gap-2 border-t border-slate-100 pt-3.5"><div><div className="text-[10px] text-slate-400">Your chance</div><div className="mt-1 text-sm font-semibold text-emerald-600">Good fit</div></div><div><div className="text-[10px] text-slate-400">Est. fees / yr</div><div className="mt-1 text-sm font-semibold text-slate-700">₹60k</div></div><div><div className="text-[10px] text-slate-400">Median package</div><div className="mt-1 text-sm font-semibold text-slate-700">₹9.2 LPA</div></div></div>
-                </div>
-                <div className="relative z-10 mt-3 grid grid-cols-2 gap-3"><div className="rounded-2xl border border-white bg-white/80 p-3.5"><div className="flex items-center justify-between"><span className="text-[11px] text-slate-500">Family alignment</span><Heart size={14} className="text-violet-500" /></div><div className="mt-2 flex items-end gap-1"><span className="text-2xl font-semibold tracking-tight">92</span><span className="mb-1 text-[11px] text-slate-400">/ 100</span></div><div className="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-100"><div className="h-full w-[92%] rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-400" /></div></div><div className="rounded-2xl border border-white bg-white/80 p-3.5"><div className="flex items-center justify-between"><span className="text-[11px] text-slate-500">4-year value</span><Banknote size={14} className="text-emerald-500" /></div><div className="mt-2 text-2xl font-semibold tracking-tight">8.4<span className="ml-1 text-sm text-slate-500">×</span></div><div className="mt-1 text-[10px] text-slate-400">projected return on cost</div></div></div>
-                <div className="pointer-events-none absolute -bottom-16 -right-20 h-64 w-64 rounded-full border border-violet-200/70" /><div className="pointer-events-none absolute -bottom-6 -right-10 h-44 w-44 rounded-full border border-violet-200/50" />
-              </div>
-            </div>
-            <div className="mt-4 flex justify-center gap-1.5"><span className="h-1.5 w-6 rounded-full bg-violet-500" /><span className="h-1.5 w-1.5 rounded-full bg-slate-300" /><span className="h-1.5 w-1.5 rounded-full bg-slate-300" /></div>
-          </div>
-        </section>
-      )}
+          {view === "overview" && <Overview go={go} tasks={tasks} setTasks={setTasks} />}
+          {view === "academics" && <Academics rank={rank} setRank={setRank} region={region} setRegion={setRegion} />}
+          {view === "planner" && <Planner tasks={tasks} setTasks={setTasks} taskTitle={taskTitle} setTaskTitle={setTaskTitle} addTask={addTask} />}
+          {view === "progress" && <ProgressView tasks={tasks} />}
+          {view === "advisor" && <Advisor messages={chatMessages} input={chatInput} setInput={setChatInput} send={sendChat} />}
+          {view === "careers" && <Careers />}
+          {view === "family" && <Family recommended={recommended} priorities={priorities} setPriorities={setPriorities} selectedCollege={selectedCollege} setSelectedCollege={setSelectedCollege} />}
+          {view === "wellbeing" && <Wellbeing selectedMood={selectedMood} setSelectedMood={setSelectedMood} focusSeconds={focusSeconds} setFocusSeconds={setFocusSeconds} focusRunning={focusRunning} setFocusRunning={setFocusRunning} />}
+          {view === "resources" && <Resources items={filteredResources} query={query} setQuery={setQuery} saved={savedResources} toggle={toggleResource} />}
 
-      {step === "academics" && (
-        <section className="mx-auto max-w-[1040px] px-5 pb-16 pt-5 sm:px-8">
-          <div className="mb-8 flex items-center justify-between">
-            <button onClick={() => setStep("welcome")} className="flex items-center gap-2 text-xs font-medium text-slate-500 hover:text-violet-700"><ArrowLeft size={15} /> Back</button>
-            <div className="flex items-center gap-2 text-[11px] font-medium text-violet-700"><span className="flex h-6 w-6 items-center justify-center rounded-full bg-violet-100">1</span> Your academics <span className="mx-1 text-slate-300">—</span><span className="text-slate-400">2 of 3</span></div>
-          </div>
-          <div className="mb-7 h-1 overflow-hidden rounded-full bg-slate-100"><div className="h-full w-1/3 rounded-full bg-violet-500 transition-all" /></div>
-          <div className="mb-7"><div className="mb-2 text-[11px] font-semibold uppercase tracking-[.13em] text-violet-600">A strong start</div><h1 className="text-3xl font-semibold tracking-[-.04em] text-slate-900 sm:text-[36px]">Let’s get to know your academics.</h1><p className="mt-2 text-sm leading-6 text-slate-500">A few details help us make your shortlist genuinely yours. Estimates are okay — you can refine them later.</p></div>
-
-          <div className="space-y-4">
-            <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-card sm:p-6">
-              <div className="mb-5 flex items-center gap-3"><span className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600"><BookOpen size={18} /></span><div><h2 className="text-sm font-semibold text-slate-800">Secondary education <span className="font-normal text-slate-400">(Class 10)</span></h2><p className="mt-0.5 text-xs text-slate-400">Your foundational academic record</p></div></div>
-              <div className="grid gap-4 sm:grid-cols-2"><Field label="Education board"><SelectInput value={profile.board} onChange={(value) => updateProfile("board", value)} options={["CBSE", "ICSE", "State Board", "Other"]} /></Field><Field label="Overall marks or percentage" hint="Enter a percentage from 0 to 100"><TextInput value={profile.tenth} onChange={(value) => updateProfile("tenth", value)} placeholder="e.g. 92" type="number" /></Field></div>
-            </div>
-            <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-card sm:p-6">
-              <div className="mb-5 flex items-center gap-3"><span className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-50 text-violet-600"><GraduationCap size={19} /></span><div><h2 className="text-sm font-semibold text-slate-800">Higher secondary <span className="font-normal text-slate-400">(Class 12 / Intermediate)</span></h2><p className="mt-0.5 text-xs text-slate-400">Your subjects and PCM aggregate</p></div></div>
-              <div className="grid gap-4 sm:grid-cols-2"><Field label="Intermediate group"><SelectInput value={profile.group} onChange={(value) => updateProfile("group", value)} options={["MPC", "Other"]} /></Field><Field label="PCM aggregate percentage"><TextInput value={profile.pcm} onChange={(value) => updateProfile("pcm", value)} placeholder="e.g. 88.5" type="number" /></Field></div>
-            </div>
-            <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-card sm:p-6">
-              <div className="mb-5 flex items-center gap-3"><span className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-50 text-amber-600"><Award size={18} /></span><div><h2 className="text-sm font-semibold text-slate-800">Competitive entrance exams</h2><p className="mt-0.5 text-xs text-slate-400">Share any results you have — every field is optional</p></div></div>
-              <div className="grid gap-x-4 gap-y-4 sm:grid-cols-2">
-                <Field label="JEE Main application number"><TextInput value={profile.jeeApplication} onChange={(value) => updateProfile("jeeApplication", value)} placeholder="Optional" /></Field>
-                <Field label="JEE Main percentile"><TextInput value={profile.jeePercentile} onChange={(value) => updateProfile("jeePercentile", value)} placeholder="e.g. 92.4" type="number" /></Field>
-                <Field label="JEE Main All India Rank"><TextInput value={profile.jeeRank} onChange={(value) => updateProfile("jeeRank", value)} placeholder="e.g. 18,500" type="number" /></Field>
-                <Field label="EAPCET exam state"><SelectInput value={profile.examState} onChange={(value) => updateProfile("examState", value)} options={["Andhra Pradesh", "Telangana"]} /></Field>
-                <Field label="EAPCET marks"><TextInput value={profile.eapcetMarks} onChange={(value) => updateProfile("eapcetMarks", value)} placeholder="Optional" type="number" /></Field>
-                <Field label="EAPCET state rank"><TextInput value={profile.eapcetRank} onChange={(value) => updateProfile("eapcetRank", value)} placeholder="e.g. 4,200" type="number" /></Field>
-                <Field label="JEE Advanced qualified?"><SelectInput value={profile.advancedQualified} onChange={(value) => updateProfile("advancedQualified", value)} options={["No", "Yes"]} /></Field>
-                {profile.advancedQualified === "Yes" && <Field label="JEE Advanced rank"><TextInput value={profile.advancedRank} onChange={(value) => updateProfile("advancedRank", value)} placeholder="e.g. 5,200" type="number" /></Field>}
-              </div>
-            </div>
-            <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-card sm:p-6">
-              <div className="mb-5 flex items-center gap-3"><span className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-50 text-rose-600"><ShieldCheck size={18} /></span><div><h2 className="text-sm font-semibold text-slate-800">Regional & category preferences</h2><p className="mt-0.5 text-xs text-slate-400">Used to make regional cutoff estimates more relevant</p></div></div>
-              <div className="grid gap-4 sm:grid-cols-2"><Field label="University region"><SelectInput value={profile.region} onChange={(value) => updateProfile("region", value as Region)} options={["AU", "SVU", "OU", "Open"]} /></Field><Field label="Admission category"><SelectInput value={profile.category} onChange={(value) => updateProfile("category", value as Category)} options={["OC", "EWS", "BC", "SC", "ST"]} /></Field>{profile.category === "BC" && <Field label="BC subcategory"><SelectInput value={profile.bcSubcategory} onChange={(value) => updateProfile("bcSubcategory", value)} options={["BC-A", "BC-B", "BC-C", "BC-D", "BC-E"]} /></Field>}</div>
-              <div className="mt-5 grid gap-3 sm:grid-cols-2">
-                <button type="button" onClick={() => updateProfile("girlsQuota", !profile.girlsQuota)} className={`flex items-center justify-between rounded-xl border px-4 py-3.5 text-left transition ${profile.girlsQuota ? "border-violet-200 bg-violet-50/60" : "border-slate-100 bg-slate-50/60 hover:bg-white"}`}><span><span className="block text-xs font-semibold text-slate-700">Girls’ quota</span><span className="mt-1 block text-[10px] text-slate-400">Include eligible seat relaxations</span></span><span className={`flex h-5 w-9 items-center rounded-full p-0.5 transition ${profile.girlsQuota ? "bg-violet-500" : "bg-slate-300"}`}><span className={`h-4 w-4 rounded-full bg-white shadow-sm transition ${profile.girlsQuota ? "translate-x-4" : ""}`} /></span></button>
-                <button type="button" onClick={() => updateProfile("reimbursement", !profile.reimbursement)} className={`flex items-center justify-between rounded-xl border px-4 py-3.5 text-left transition ${profile.reimbursement ? "border-violet-200 bg-violet-50/60" : "border-slate-100 bg-slate-50/60 hover:bg-white"}`}><span><span className="block text-xs font-semibold text-slate-700">Fee reimbursement</span><span className="mt-1 block text-[10px] text-slate-400">Estimate eligible AP / TS support</span></span><span className={`flex h-5 w-9 items-center rounded-full p-0.5 transition ${profile.reimbursement ? "bg-violet-500" : "bg-slate-300"}`}><span className={`h-4 w-4 rounded-full bg-white shadow-sm transition ${profile.reimbursement ? "translate-x-4" : ""}`} /></span></button>
-              </div>
-              <p className="mt-3 flex items-start gap-1.5 text-[10px] leading-5 text-slate-400"><CircleHelp size={12} className="mt-0.5 shrink-0" /> Reimbursement and reservation eligibility depend on current government rules and your circumstances. We’ll show estimates, not eligibility decisions.</p>
-            </div>
-          </div>
-          <div className="mt-6 flex flex-col-reverse items-center justify-between gap-4 sm:flex-row"><span className="text-[11px] text-slate-400">Your details aren’t stored or shared.</span><button onClick={() => { setQuestion(0); setStep("diagnostic"); }} className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-violet-600 px-5 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-violet-700 sm:w-auto">Continue to preferences <ArrowRight size={16} /></button></div>
-        </section>
-      )}
-
-      {step === "diagnostic" && (
-        <section className="mx-auto flex min-h-[calc(100vh-76px)] max-w-[980px] flex-col px-5 pb-12 pt-5 sm:px-8">
-          <div className="mb-8 flex items-center justify-between"><button onClick={() => setStep("academics")} className="flex items-center gap-2 text-xs font-medium text-slate-500 hover:text-violet-700"><ArrowLeft size={15} /> Back to academics</button><div className="flex items-center gap-2 text-[11px] font-medium text-violet-700"><span className="flex h-6 w-6 items-center justify-center rounded-full bg-violet-100">2</span> Getting to know you</div></div>
-          <div className="mb-6 h-1 overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-violet-500 transition-all duration-500" style={{ width: `${Math.round(((question + 1) / questions.length) * 100)}%` }} /></div>
-          <div className="flex flex-1 flex-col justify-center pb-12">
-            <div className="mb-4 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[.14em] text-violet-600"><span className="flex h-7 w-7 items-center justify-center rounded-lg bg-violet-100"><Sparkles size={14} /></span>{questions[question].eyebrow}</div>
-            <div className="flex items-end justify-between gap-4"><h1 className="max-w-[650px] text-3xl font-semibold leading-tight tracking-[-.04em] text-slate-900 sm:text-[40px]">{questions[question].title}</h1><span className="mb-1 hidden text-xs text-slate-400 sm:block">0{question + 1} <span className="mx-1">/</span> 06</span></div>
-            <p className="mt-3 text-sm text-slate-500">{questions[question].type === "values" ? "Rate each from 1 (not a priority) to 5 (essential to our decision)." : "There’s no wrong answer — this is about what feels right for you."}</p>
-            <div className="mt-8 grid gap-3 sm:grid-cols-2">
-              {questions[question].options.map((option, index) => {
-                const selected = Array.isArray(answerValue(questions[question].type)) ? (answerValue(questions[question].type) as string[]).includes(option) : answerValue(questions[question].type) === option;
-                if (questions[question].type === "values") return <div key={option} className={`flex flex-col gap-4 rounded-2xl border p-4 sm:flex-row sm:items-center sm:justify-between ${selected ? "border-violet-200 bg-violet-50/60" : "border-slate-200 bg-white"}`}><div className="flex items-center gap-3"><span className={`flex h-9 w-9 items-center justify-center rounded-xl ${selected ? "bg-violet-100 text-violet-700" : "bg-slate-100 text-slate-500"}`}>{index === 0 ? <ShieldCheck size={16} /> : index === 1 ? <Building2 size={16} /> : index === 2 ? <Sparkles size={16} /> : <Award size={16} />}</span><span className="text-sm font-medium text-slate-700">{option}</span></div><div className="flex items-center gap-1.5">{[1, 2, 3, 4, 5].map((rating) => <button key={rating} aria-label={`${option}: rate ${rating} out of 5`} onClick={() => setValueRating(option, rating)} className={`flex h-8 w-8 items-center justify-center rounded-lg text-xs font-semibold transition ${answers.ratings[option] === rating ? "bg-violet-600 text-white shadow-sm" : "bg-slate-100 text-slate-500 hover:bg-violet-100 hover:text-violet-700"}`}>{rating}</button>)}</div></div>;
-                return <button key={option} onClick={() => setAnswer(questions[question].type, option)} className={`group flex min-h-[74px] items-center gap-4 rounded-2xl border p-4 text-left transition ${selected ? "border-violet-300 bg-violet-50/80 shadow-[0_0_0_3px_rgba(115,87,232,.06)]" : "border-slate-200 bg-white hover:border-violet-200 hover:bg-violet-50/30"}`}><span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-xs font-semibold ${selected ? "bg-violet-600 text-white" : "bg-slate-100 text-slate-500 group-hover:bg-violet-100 group-hover:text-violet-700"}`}>{selected ? <Check size={16} /> : String.fromCharCode(65 + index)}</span><span className={`text-sm font-medium ${selected ? "text-violet-800" : "text-slate-700"}`}>{option}</span></button>;
-              })}
-            </div>
-            {questions[question].type === "budget" && <button onClick={() => setAnswers((current) => ({ ...current, loan: !current.loan }))} className={`mt-4 flex items-center gap-2 text-xs font-medium ${answers.loan ? "text-violet-700" : "text-slate-500 hover:text-violet-700"}`}><span className={`flex h-4 w-4 items-center justify-center rounded border ${answers.loan ? "border-violet-500 bg-violet-500 text-white" : "border-slate-300"}`}>{answers.loan && <Check size={11} />}</span>We’d consider an education loan</button>}
-            <div className="mt-9 flex items-center justify-between"><button onClick={() => question > 0 && setQuestion((current) => current - 1)} disabled={question === 0} className="flex items-center gap-2 rounded-xl px-4 py-3 text-sm font-medium text-slate-500 transition hover:bg-white disabled:opacity-30"><ArrowLeft size={15} /> Previous</button><button onClick={() => question < questions.length - 1 ? setQuestion((current) => current + 1) : setStep("dashboard")} disabled={questions[question].type === "values" ? answers.values.length < questions[question].options.length : !answers[questions[question].type]} className="flex items-center gap-2 rounded-xl bg-violet-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-45">{question === questions.length - 1 ? "Build my shortlist" : "Next question"} <ArrowRight size={15} /></button></div>
-            <div className="mt-5 flex justify-center gap-1.5">{questions.map((_, index) => <button key={index} aria-label={`Go to question ${index + 1}`} onClick={() => setQuestion(index)} className={`h-1.5 rounded-full transition-all ${question === index ? "w-7 bg-violet-500" : "w-1.5 bg-slate-200 hover:bg-violet-200"}`} />)}</div>
-          </div>
-        </section>
-      )}
-
-      {step === "dashboard" && (
-        <section className="mx-auto max-w-[1440px] px-5 pb-20 pt-4 sm:px-8 lg:px-12">
-          <div className="mb-6 flex flex-wrap items-center justify-between gap-3"><div className="flex items-center gap-2 text-xs text-slate-400"><span>Home</span><span>/</span><span className="font-medium text-slate-600">Your decision dashboard</span></div><button onClick={() => setStep("academics")} className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-600 hover:border-violet-200 hover:text-violet-700"><SlidersHorizontal size={14} /> Edit your profile</button></div>
-          <div className="relative mb-6 overflow-hidden rounded-[24px] bg-[#221b42] px-5 py-6 text-white sm:px-8 sm:py-7">
-            <div className="absolute -right-10 -top-24 h-72 w-72 rounded-full border border-white/10" /><div className="absolute -right-1 -top-14 h-52 w-52 rounded-full border border-white/10" /><div className="absolute right-[17%] top-3 h-24 w-24 rounded-full bg-violet-500/20 blur-2xl" />
-            <div className="relative z-10 flex flex-wrap items-end justify-between gap-5"><div><div className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[.16em] text-violet-200"><Sparkles size={13} /> Your engineering roadmap</div><h1 className="text-[26px] font-semibold tracking-[-.04em] sm:text-[32px]">{persona === "parent" ? "A clearer decision, as a family." : "A clearer next step, together."}</h1><p className="mt-2 max-w-[600px] text-sm leading-6 text-violet-100/70">Built around your {profile.examState === "Andhra Pradesh" ? "AP" : "TS"} EAPCET profile, {profile.region} region, and what matters to your family.</p></div><div className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[.08] px-3 py-2 text-[11px] text-violet-100"><span className="h-2 w-2 rounded-full bg-emerald-400" /> Profile complete</div></div>
-          </div>
-
-          <div className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-card"><div className="flex items-center justify-between"><span className="text-xs font-medium text-slate-500">Aptitude & fitment</span><span className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-50 text-violet-600"><Target size={16} /></span></div><div className="mt-3 flex items-end gap-1"><span className="text-[34px] font-semibold tracking-[-.06em]">{fitIndex}</span><span className="mb-1.5 text-xs text-slate-400">/ 100</span></div><div className="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-gradient-to-r from-violet-500 to-indigo-400 transition-all" style={{ width: `${fitIndex}%` }} /></div><div className="mt-2 text-[10px] text-slate-400">Academics + exam profile + preferences</div></div>
-            <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-card"><div className="flex items-center justify-between"><span className="text-xs font-medium text-slate-500">Family alignment</span><span className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-50 text-rose-500"><Heart size={16} /></span></div><div className="mt-3 flex items-end gap-1"><span className="text-[34px] font-semibold tracking-[-.06em]">{alignmentScore}</span><span className="mb-1.5 text-xs text-slate-400">%</span></div><div className="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-gradient-to-r from-rose-400 to-violet-500 transition-all" style={{ width: `${alignmentScore}%` }} /></div><div className="mt-2 text-[10px] text-slate-400">Shared priorities, safety & affordability</div></div>
-            <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-card"><div className="flex items-center justify-between"><span className="text-xs font-medium text-slate-500">Estimated net fees</span><span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600"><Wallet size={16} /></span></div><div className="mt-3 flex items-end gap-1"><span className="text-[34px] font-semibold tracking-[-.06em]">{profile.reimbursement ? "₹0–30k" : "₹60k–1.4L"}</span><span className="mb-1.5 text-xs text-slate-400">/ yr</span></div><div className="mt-2 flex items-center gap-1 text-[10px] text-emerald-600"><CheckCircle2 size={12} />{profile.reimbursement ? "Illustrative reimbursement applied" : answers.loan ? "Loan willingness noted in planning" : "Before any applicable aid"}</div><div className="mt-1 text-[10px] text-slate-400">Excludes living costs; verify with college</div></div>
-            <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-card"><div className="flex items-center justify-between"><span className="text-xs font-medium text-slate-500">Profile snapshot</span><span className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-50 text-amber-600"><GraduationCap size={16} /></span></div><div className="mt-3 text-xl font-semibold tracking-tight">{profile.region} Region · {profile.category}</div><div className="mt-2 text-[11px] text-slate-500">{profile.eapcetRank ? `EAPCET rank ${Number(profile.eapcetRank).toLocaleString("en-IN")}` : "Add your EAPCET rank for better estimates"}</div><button onClick={() => setStep("academics")} className="mt-2 text-[10px] font-semibold text-violet-600 hover:text-violet-800">Update academic details →</button></div>
-          </div>
-
-          <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
-            <div>
-              <div className="mb-4 flex flex-wrap items-end justify-between gap-3"><div><div className="mb-1 text-[10px] font-semibold uppercase tracking-[.14em] text-violet-600">Your personalized shortlist</div><h2 className="text-xl font-semibold tracking-tight text-slate-900">Colleges worth exploring</h2><p className="mt-1 text-xs text-slate-400">Rank-aware possibilities, matched to the things your family values.</p></div><div className="flex gap-2 text-[10px]"><span className="flex items-center gap-1.5 rounded-full bg-rose-50 px-2.5 py-1.5 font-medium text-rose-700"><span className="h-1.5 w-1.5 rounded-full bg-rose-400" /> Dream</span><span className="flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1.5 font-medium text-amber-700"><span className="h-1.5 w-1.5 rounded-full bg-amber-400" /> Realistic</span><span className="flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1.5 font-medium text-emerald-700"><span className="h-1.5 w-1.5 rounded-full bg-emerald-400" /> Safe</span></div></div>
-              <div className="space-y-3">
-                {recommended.map((college) => {
-                  const classification = college.probability < 30 ? "Dream" : college.probability > 70 ? "Safe" : "Realistic";
-                  const tagStyle = classification === "Dream" ? "bg-rose-50 text-rose-700" : classification === "Safe" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700";
-                  const netFee = college.effectiveFees;
-                  return <article key={college.code} className="rounded-2xl border border-slate-100 bg-white p-4 shadow-card transition hover:-translate-y-0.5 hover:shadow-soft sm:p-5">
-                    <div className="flex flex-wrap items-start justify-between gap-3"><div className="flex min-w-0 items-center gap-3"><div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${college.accent} text-[11px] font-bold tracking-wide text-white shadow-sm`}>{college.code.slice(0, 3)}</div><div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><h3 className="text-sm font-semibold text-slate-800">{college.name}</h3><span className="rounded-md bg-slate-100 px-1.5 py-0.5 text-[9px] font-semibold text-slate-500">{college.code}</span></div><div className="mt-1 flex flex-wrap items-center gap-2 text-[10px] text-slate-400"><span className="flex items-center gap-1"><MapPin size={11} /> {college.city}</span><span>·</span><span>{college.badge}</span></div></div></div><span className={`rounded-full px-2.5 py-1 text-[10px] font-semibold ${tagStyle}`}>{classification} · {college.probability}%</span></div>
-                    <div className="mt-4 grid grid-cols-2 gap-y-3 border-t border-slate-100 pt-3.5 sm:grid-cols-4"><div><div className="text-[10px] text-slate-400">Branch</div><div className="mt-1 text-xs font-semibold text-slate-700">{answers.tradeoff === "A core branch at a top university" && college.entrance === "eapcet" ? "Electronics / CSE" : answers.domain ? selectedBranch : college.branch}</div></div><div><div className="text-[10px] text-slate-400">Est. net fees / yr</div><div className="mt-1 text-xs font-semibold text-slate-700">{formatINR(netFee)}{profile.reimbursement && college.fees <= 100000 && <span className="ml-1 text-[9px] text-emerald-600">aid est.</span>}</div></div><div><div className="text-[10px] text-slate-400">Median package</div><div className="mt-1 text-xs font-semibold text-slate-700">{formatINR(college.package)}<span className="font-normal text-slate-400"> / yr</span></div></div><div><div className="text-[10px] text-slate-400">Suitability</div><div className="mt-1 flex items-center gap-1.5"><span className="text-xs font-semibold text-violet-700">{college.suitability}</span><span className="h-1 w-12 overflow-hidden rounded-full bg-slate-100"><span className="block h-full rounded-full bg-violet-500" style={{ width: `${college.suitability}%` }} /></span></div></div></div>
-                  </article>;
-                })}
-              </div>
-              <div className="mt-4 flex items-center justify-between rounded-xl border border-violet-100 bg-violet-50/60 px-4 py-3 text-[10px] leading-5 text-violet-800"><span><span className="font-semibold">A note on estimates:</span> Illustrative, not official cutoff data. Confirm current-year cutoffs, fees, seat rules and eligibility with the counselling authority.</span><CircleHelp size={16} className="ml-3 shrink-0 text-violet-500" /></div>
-              <button onClick={() => setShowAll((value) => !value)} className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white py-3 text-xs font-semibold text-slate-600 transition hover:border-violet-200 hover:text-violet-700">{showAll ? "Show fewer colleges" : "Explore all recommendations"}{showAll ? <ArrowDown size={14} className="rotate-180" /> : <ArrowRight size={14} />}</button>
-            </div>
-
-            <aside className="space-y-4 xl:sticky xl:top-5">
-              <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-card">
-                <div className="flex items-start justify-between"><div><div className="flex items-center gap-2"><SlidersHorizontal size={15} className="text-violet-600" /><h2 className="text-sm font-semibold text-slate-800">Make it yours</h2></div><p className="mt-1.5 text-[10px] text-slate-400">Tune what matters most. Shortlist updates live.</p></div><span className="rounded-full bg-emerald-50 px-2 py-1 text-[9px] font-semibold text-emerald-700">LIVE</span></div>
-                <div className="mt-5 space-y-5">
-                  {([["placement", "Placement outcomes", TrendingUp], ["affordability", "Fee affordability", IndianRupee], ["location", "Closer to home", MapPin], ["branch", "Branch preference", Sparkles]] as const).map(([key, label, Icon]) => <label key={key} className="block"><span className="mb-2 flex items-center justify-between"><span className="flex items-center gap-2 text-[11px] font-medium text-slate-600"><Icon size={13} className="text-slate-400" />{label}</span><span className="text-[10px] font-semibold tabular-nums text-violet-700">{weights[key]}%</span></span><input aria-label={`${label} weight`} className="range-input h-1 w-full cursor-pointer appearance-none rounded-full bg-slate-200" type="range" min="0" max="100" value={weights[key]} onChange={(event) => setWeights((current) => ({ ...current, [key]: Number(event.target.value) }))} /></label>)}
-                </div>
-                <button onClick={() => setWeights(initialWeights)} className="mt-5 text-[10px] font-semibold text-violet-600 hover:text-violet-800">Reset priorities</button>
-              </div>
-              <div className="rounded-2xl border border-emerald-100 bg-gradient-to-br from-[#f2fbf7] to-white p-5 shadow-card">
-                <div className="flex items-center justify-between"><div className="flex items-center gap-2"><span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700"><TrendingUp size={16} /></span><h2 className="text-sm font-semibold text-slate-800">Your ROI snapshot</h2></div><span className="rounded-full bg-white px-2 py-1 text-[9px] font-medium text-emerald-700">Illustrative</span></div>
-                <p className="mt-3 text-[10px] leading-5 text-slate-500">A simple comparison using the leading fit in your shortlist — not a salary guarantee.</p>
-                {(() => { const best = rankedColleges[0]; const fourYearCost = best.effectiveFees * 4 + 320000; const threeYearSalary = best.package * 3; const multiplier = (threeYearSalary / Math.max(fourYearCost, 1)).toFixed(1); return <><div className="mt-4 grid grid-cols-2 gap-3"><div className="rounded-xl border border-white bg-white/80 p-3"><div className="text-[9px] text-slate-400">4-year total cost*</div><div className="mt-1.5 text-lg font-semibold tracking-tight text-slate-800">{formatINR(fourYearCost)}</div><div className="mt-1 text-[9px] text-slate-400">tuition + est. living costs</div></div><div className="rounded-xl border border-white bg-white/80 p-3"><div className="text-[9px] text-slate-400">3-year gross pay**</div><div className="mt-1.5 text-lg font-semibold tracking-tight text-emerald-700">{formatINR(threeYearSalary)}</div><div className="mt-1 text-[9px] text-slate-400">at median package estimate</div></div></div><div className="mt-3 flex items-center justify-between rounded-xl bg-emerald-600 px-3.5 py-3 text-white"><span className="text-[11px] font-medium">Indicative salary / cost</span><span className="text-lg font-semibold">{multiplier}×</span></div></>; })()}
-                <p className="mt-3 text-[9px] leading-4 text-slate-400">*Living costs assumed at ₹80k/year. **Gross, before taxes, expenses and placement variation. Salaries are not assured.</p>
-              </div>
-              <div className="rounded-2xl border border-violet-100 bg-violet-50/50 p-4"><div className="flex gap-2.5"><ShieldCheck size={17} className="mt-0.5 shrink-0 text-violet-600" /><div><div className="text-xs font-semibold text-slate-800">Made for both of you</div><p className="mt-1.5 text-[10px] leading-5 text-slate-500">Share this shortlist with your family and compare priorities together. Your information stays on this device.</p><button onClick={() => window.print()} className="mt-2 flex items-center gap-1.5 text-[10px] font-semibold text-violet-700 hover:text-violet-900"><ArrowUpRight size={12} /> Print or save shortlist</button></div></div></div>
-            </aside>
-          </div>
-        </section>
-      )}
-      <footer className={`mx-auto max-w-[1440px] px-5 pb-7 sm:px-8 lg:px-12 ${step === "welcome" ? "hidden" : ""}`}><div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200/70 pt-5 text-[10px] text-slate-400"><Brand /><span>Built to help families make confident, informed decisions.</span><span>Admission & financial figures are indicative only.</span></div></footer>
-    </main>
+          <footer className="mt-8 flex flex-wrap items-center justify-between gap-2 border-t border-slate-200/80 pt-4 text-[10px] text-slate-400"><span>Pathwise · Engineering education, made clearer.</span><span>Demo data is illustrative. Always confirm admissions details with official sources.</span></footer>
+        </div>
+      </main>
+    </div>
   );
+}
+
+function Overview({ go, tasks, setTasks }: { go: (view: View) => void; tasks: StudyTask[]; setTasks: (value: (tasks: StudyTask[]) => StudyTask[]) => void }) {
+  const openTasks = tasks.filter((task) => !task.done).length;
+  return <div className="space-y-5">
+    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <StatCard icon={Activity} label="Study time this week" value="8.5 hrs" note="+1.5 hrs from last week" change="up" color="blue" bars={[32, 45, 36, 66, 48, 82, 55]} />
+      <StatCard icon={Target} label="Weekly goal" value="71%" note="3.5 hours left to your goal" change="up" color="teal" bars={[25, 37, 48, 44, 62, 75, 71]} />
+      <StatCard icon={BookOpen} label="Subjects on track" value="2 of 3" note="Chemistry is your strong suit" change="neutral" color="amber" bars={[60, 72, 66, 81, 75, 90, 84]} />
+      <StatCard icon={CalendarDays} label="Upcoming tasks" value={String(openTasks).padStart(2, "0")} note="Next up: Mathematics practice" change="neutral" color="violet" bars={[48, 48, 65, 45, 73, 58, 84]} />
+    </div>
+
+    <div className="grid gap-5 xl:grid-cols-[1.55fr_1fr]">
+      <Card className="overflow-hidden">
+        <div className="flex flex-wrap items-start justify-between gap-3 px-5 pt-5 sm:px-6"><div><SectionTitle title="Weekly learning rhythm" /><p className="-mt-3 text-[10px] text-slate-400">A balanced pace helps you stay consistent.</p></div><button onClick={() => go("progress")} className="rounded-lg border border-slate-200 px-2.5 py-1.5 text-[10px] font-medium text-slate-500 hover:text-blue-700">Last 7 days <ChevronDown size={12} className="ml-1 inline" /></button></div>
+        <div className="grid grid-cols-7 gap-2 px-5 pb-5 pt-7 sm:px-6">
+          {[{ day: "M", hrs: "1.2", h: 42 }, { day: "T", hrs: "1.8", h: 63 }, { day: "W", hrs: "0.9", h: 32 }, { day: "T", hrs: "2.1", h: 76 }, { day: "F", hrs: "1.4", h: 52 }, { day: "S", hrs: "1.1", h: 40 }, { day: "S", hrs: "—", h: 3 }].map((item, index) => <div key={index} className="group flex flex-col items-center gap-2"><span className="text-[9px] font-medium text-slate-400 opacity-0 transition group-hover:opacity-100">{item.hrs}{item.hrs !== "—" ? "h" : ""}</span><div className="flex h-[128px] w-full items-end justify-center rounded-t-lg bg-slate-50"><div className={cn("w-[55%] min-w-[13px] rounded-t-md transition-all group-hover:brightness-95", index === 3 ? "bg-blue-600" : "bg-blue-200")} style={{ height: `${item.h}%` }} /></div><span className={cn("text-[10px]", index === 3 ? "font-bold text-blue-700" : "text-slate-400")}>{item.day}</span></div>)}
+        </div>
+        <div className="flex items-center justify-between border-t border-slate-100 px-5 py-3.5 text-[10px] sm:px-6"><span className="text-slate-400">Total focused study time</span><span className="font-bold text-slate-700">8h 30m <span className="ml-1 font-medium text-emerald-600">↑ 18%</span></span></div>
+      </Card>
+      <Card className="p-5 sm:p-6">
+        <div className="flex items-start justify-between"><div><SectionTitle title="College readiness" /><p className="-mt-3 text-[10px] text-slate-400">Your profile is taking shape</p></div><span className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-700"><GraduationCap size={18} /></span></div>
+        <div className="mt-4 flex items-center gap-4"><div className="relative flex h-[98px] w-[98px] shrink-0 items-center justify-center rounded-full" style={{ background: "conic-gradient(#2678e8 0 68%, #e8eef6 68% 100%)" }}><div className="flex h-[78px] w-[78px] flex-col items-center justify-center rounded-full bg-white"><span className="text-[21px] font-bold text-slate-900">68%</span><span className="text-[8px] text-slate-400">complete</span></div></div><div className="min-w-0 flex-1 space-y-3"><Readiness label="Academic details" value={88} color="bg-blue-600" /><Readiness label="Exam profile" value={72} color="bg-teal-500" /><Readiness label="Family priorities" value={45} color="bg-amber-400" /></div></div>
+        <button onClick={() => go("academics")} className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-blue-50 py-2.5 text-[11px] font-semibold text-blue-700 transition hover:bg-blue-100">Complete your profile <ArrowRight size={14} /></button>
+      </Card>
+    </div>
+
+    <div className="grid gap-5 xl:grid-cols-[1.3fr_1fr]">
+      <Card className="p-5 sm:p-6">
+        <div className="flex items-center justify-between"><SectionTitle title="Today’s focus" /><SmallLink onClick={() => go("planner")}>Full study plan</SmallLink></div>
+        <div className="-mt-1 divide-y divide-slate-100">{tasks.slice(0, 3).map((task) => <div key={task.title} className="flex items-center gap-3 py-3"><button aria-label={task.done ? `Mark ${task.title} incomplete` : `Complete ${task.title}`} onClick={() => setTasks((items) => items.map((item) => item.title === task.title ? { ...item, done: !item.done } : item))} className={cn("flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-md border transition", task.done ? "border-blue-600 bg-blue-600 text-white" : "border-slate-300 hover:border-blue-500")}>{task.done && <Check size={12} />}</button><div className="min-w-0 flex-1"><div className={cn("truncate text-[11px] font-semibold", task.done ? "text-slate-400 line-through" : "text-slate-700")}>{task.title}</div><div className="mt-1 text-[9px] text-slate-400">{task.subject} <span className="mx-1">·</span> {task.time}</div></div><button aria-label="Task options" className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-50"><MoreHorizontal size={15} /></button></div>)}</div>
+        <button onClick={() => go("planner")} className="mt-1 flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-slate-300 py-2.5 text-[10px] font-semibold text-slate-500 transition hover:border-blue-300 hover:text-blue-700"><Plus size={13} /> Add a study session</button>
+      </Card>
+      <Card className="overflow-hidden border-0 bg-gradient-to-br from-[#1b4d88] to-[#2678e8] p-5 text-white shadow-lg shadow-blue-900/10 sm:p-6">
+        <div className="flex items-start justify-between"><span className="rounded-lg border border-white/20 bg-white/10 px-2.5 py-1.5 text-[9px] font-semibold uppercase tracking-[.12em] text-blue-100">A thoughtful next step</span><Sparkles size={17} className="text-sky-200" /></div>
+        <h2 className="mt-5 max-w-[340px] text-[20px] font-bold leading-tight tracking-[-.035em]">Big choices are easier when you make them together.</h2>
+        <p className="mt-2 max-w-[360px] text-[11px] leading-5 text-blue-100/85">Compare colleges around budget, branch fit, location, and the future you want to build.</p>
+        <button onClick={() => go("family")} className="mt-5 inline-flex items-center gap-2 rounded-xl bg-white px-3.5 py-2.5 text-[10px] font-semibold text-blue-800 shadow-sm transition hover:bg-blue-50">Explore family decisions <ArrowRight size={14} /></button>
+      </Card>
+    </div>
+  </div>;
+}
+
+function StatCard({ icon: Icon, label, value, note, change, color, bars }: { icon: typeof Home; label: string; value: string; note: string; change: "up" | "neutral"; color: "blue" | "teal" | "amber" | "violet"; bars: number[] }) {
+  const colors = { blue: "bg-blue-50 text-blue-700", teal: "bg-teal-50 text-teal-700", amber: "bg-amber-50 text-amber-700", violet: "bg-violet-50 text-violet-700" };
+  return <Card className="p-4 sm:p-5"><div className="flex items-start justify-between"><span className="text-[10px] font-medium text-slate-500">{label}</span><span className={cn("flex h-8 w-8 items-center justify-center rounded-lg", colors[color])}><Icon size={16} /></span></div><div className="mt-3 flex items-end justify-between"><span className="text-[23px] font-bold tracking-[-.045em] text-slate-900">{value}</span><div className="mb-1 flex h-8 items-end gap-[3px]">{bars.map((bar, index) => <span key={index} className={cn("w-[4px] rounded-t-sm", color === "blue" ? "bg-blue-300" : color === "teal" ? "bg-teal-300" : color === "amber" ? "bg-amber-300" : "bg-violet-300")} style={{ height: `${bar}%` }} />)}</div></div><div className="mt-1 flex items-center gap-1.5 text-[9px]"><span className={change === "up" ? "font-semibold text-emerald-600" : "text-slate-400"}>{change === "up" ? <ArrowUpRight size={11} className="inline" /> : <span className="mr-1 inline-block h-1 w-1 rounded-full bg-slate-400" />}</span><span className="truncate text-slate-400">{note}</span></div></Card>;
+}
+
+function Readiness({ label, value, color }: { label: string; value: number; color: string }) { return <div><div className="mb-1 flex items-center justify-between text-[9px]"><span className="text-slate-500">{label}</span><span className="font-semibold text-slate-700">{value}%</span></div><ProgressBar value={value} color={color} /></div>; }
+
+function Academics({ rank, setRank, region, setRegion }: { rank: string; setRank: (value: string) => void; region: string; setRegion: (value: string) => void }) {
+  return <div className="grid gap-5 xl:grid-cols-[1.35fr_1fr]">
+    <div className="space-y-5"><Card className="p-5 sm:p-6"><div className="mb-5 flex items-start justify-between"><div><SectionTitle title="Subject performance" /><p className="-mt-3 text-[10px] text-slate-400">A sample snapshot to help you reflect.</p></div><button className="rounded-lg border border-slate-200 px-2.5 py-1.5 text-[10px] text-slate-500">Current term <ChevronDown size={12} className="ml-1 inline" /></button></div><div className="space-y-5">{subjects.map((subject) => <div key={subject.name}><div className="mb-2 flex items-center justify-between"><div><div className="text-[11px] font-semibold text-slate-700">{subject.name}</div><div className="mt-0.5 text-[9px] text-slate-400">{subject.detail}</div></div><span className="text-[15px] font-bold text-slate-800">{subject.score}<span className="text-[9px] font-medium text-slate-400"> / 100</span></span></div><div className="h-2.5 overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full transition-all" style={{ width: `${subject.score}%`, backgroundColor: subject.color }} /></div></div>)}</div><div className="mt-5 rounded-xl bg-blue-50/70 p-3.5 text-[10px] leading-5 text-blue-900"><Sparkles size={13} className="mr-1.5 inline text-blue-700" /><strong>One idea:</strong> Your physics score has room to grow. Add two short practice sessions this week and review the questions you missed.</div></Card>
+      <Card className="p-5 sm:p-6"><SectionTitle title="Exam profile" /><p className="-mt-3 mb-4 text-[10px] text-slate-400">Add your details to personalize the college shortlist.</p><div className="grid gap-4 sm:grid-cols-2"><label className="text-[10px] font-semibold text-slate-600">Entrance exam rank<input value={rank} onChange={(event) => setRank(event.target.value)} type="number" className="mt-1.5 block h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[12px] font-medium outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100" placeholder="e.g. 4200" /></label><label className="text-[10px] font-semibold text-slate-600">Counselling region<select value={region} onChange={(event) => setRegion(event.target.value)} className="mt-1.5 block h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[11px] font-medium outline-none focus:border-blue-400"><option>AU region</option><option>OU region</option><option>SVU region</option><option>Open region</option></select></label></div><p className="mt-3 text-[9px] text-slate-400">Profile inputs are kept only in this browser session in this demo.</p></Card></div>
+    <div className="space-y-5"><Card className="p-5 sm:p-6"><div className="flex items-center justify-between"><SectionTitle title="Learning strengths" /><span className="rounded-full bg-emerald-50 px-2 py-1 text-[9px] font-semibold text-emerald-700">Good momentum</span></div><div className="mt-1 space-y-4">{[{ name: "Problem solving", value: 82 }, { name: "Consistency", value: 68 }, { name: "Concept recall", value: 76 }].map((item, i) => <Readiness key={item.name} label={item.name} value={item.value} color={["bg-blue-600", "bg-teal-500", "bg-violet-500"][i]} />)}</div></Card><Card className="p-5 sm:p-6"><div className="mb-3 flex h-9 w-9 items-center justify-center rounded-xl bg-amber-50 text-amber-600"><Lightbulb size={18} /></div><h3 className="text-[13px] font-semibold text-slate-800">Learning tip</h3><p className="mt-1.5 text-[10px] leading-5 text-slate-500">After each practice set, write down one mistake and the idea that would have helped you solve it. Reviewing those notes can make your next session more focused.</p></Card></div>
+  </div>;
+}
+
+function Planner({ tasks, setTasks, taskTitle, setTaskTitle, addTask }: { tasks: StudyTask[]; setTasks: (value: (tasks: StudyTask[]) => StudyTask[]) => void; taskTitle: string; setTaskTitle: (value: string) => void; addTask: (event: FormEvent) => void }) {
+  return <div className="grid gap-5 xl:grid-cols-[1.4fr_1fr]"><Card className="p-5 sm:p-6"><div className="flex items-start justify-between"><div><SectionTitle title="This week" /><p className="-mt-3 text-[10px] text-slate-400">A flexible plan that leaves room to rest.</p></div><span className="rounded-lg bg-blue-50 px-2.5 py-1.5 text-[10px] font-semibold text-blue-700">8.5 / 12 hrs</span></div><div className="mt-4 grid grid-cols-7 gap-2">{["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day, i) => <button key={day} className={cn("rounded-xl border px-1 py-3 text-center transition", i === 3 ? "border-blue-600 bg-blue-600 text-white shadow-md shadow-blue-600/15" : "border-slate-200 bg-white text-slate-500 hover:border-blue-200")}><span className="block text-[9px] font-medium">{day}</span><span className="mt-2 block text-[12px] font-bold">{19 + i}</span><span className={cn("mx-auto mt-2 block h-1 w-1 rounded-full", [0, 1, 3, 4, 5].includes(i) ? (i === 3 ? "bg-white" : "bg-blue-500") : "bg-transparent")} /></button>)}</div><div className="my-5 flex items-center gap-3"><div className="h-px flex-1 bg-slate-100" /><span className="text-[9px] font-semibold uppercase tracking-[.12em] text-slate-400">Today · Thursday</span><div className="h-px flex-1 bg-slate-100" /></div><div className="space-y-3">{tasks.map((task) => <div key={task.title} className="flex items-center gap-3 rounded-xl border border-slate-100 p-3"><button onClick={() => setTasks((items) => items.map((item) => item.title === task.title ? { ...item, done: !item.done } : item))} className={cn("flex h-5 w-5 items-center justify-center rounded-md border", task.done ? "border-blue-600 bg-blue-600 text-white" : "border-slate-300 text-transparent")}><Check size={12} /></button><span className={cn("min-w-0 flex-1 truncate text-[10px] font-semibold", task.done && "text-slate-400 line-through")}>{task.title}<span className="mt-1 block text-[9px] font-normal text-slate-400">{task.subject} · {task.time}</span></span><Clock3 size={14} className="text-slate-400" /></div>)}</div><form onSubmit={addTask} className="mt-4 flex gap-2"><input value={taskTitle} onChange={(event) => setTaskTitle(event.target.value)} placeholder="Add a study session..." className="h-10 min-w-0 flex-1 rounded-xl border border-slate-200 px-3 text-[10px] outline-none focus:border-blue-400" /><button className="flex h-10 items-center gap-1.5 rounded-xl bg-blue-700 px-3 text-[10px] font-semibold text-white hover:bg-blue-800"><Plus size={13} /> Add</button></form></Card><Card className="p-5 sm:p-6"><SectionTitle title="Study session guide" /><div className="mt-1 flex items-center gap-3 rounded-xl bg-blue-50 p-3"><span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white text-blue-700"><Timer size={17} /></span><span><span className="block text-[11px] font-semibold text-slate-700">Focus, then recharge</span><span className="block mt-0.5 text-[9px] text-slate-500">Try 25 minutes of focus and a short break.</span></span></div><div className="mt-4 space-y-3 text-[10px] leading-5 text-slate-500"><p><strong className="text-slate-700">1. Choose one outcome.</strong> Keep the session specific, like solving five problems.</p><p><strong className="text-slate-700">2. Put distractions away.</strong> Keep only the material you need in reach.</p><p><strong className="text-slate-700">3. Close with a recap.</strong> Note what you understood and what you want to revisit.</p></div></Card></div>;
+}
+
+function ProgressView({ tasks }: { tasks: StudyTask[] }) {
+  const complete = tasks.filter((task) => task.done).length;
+  return <div className="grid gap-5 xl:grid-cols-[1.3fr_1fr]"><Card className="p-5 sm:p-6"><SectionTitle title="Goals this month" /><div className="mt-1 space-y-5">{[{ title: "Build a steady study routine", value: 71, meta: "8.5 of 12 weekly hours", color: "bg-blue-600" }, { title: "Strengthen physics fundamentals", value: 64, meta: "4 of 6 topic sets reviewed", color: "bg-teal-500" }, { title: "Explore engineering branches", value: 45, meta: "3 of 7 pathways explored", color: "bg-violet-500" }].map((goal) => <div key={goal.title}><div className="mb-2 flex items-end justify-between"><div><div className="text-[11px] font-semibold text-slate-700">{goal.title}</div><div className="mt-1 text-[9px] text-slate-400">{goal.meta}</div></div><span className="text-[12px] font-bold text-slate-700">{goal.value}%</span></div><ProgressBar value={goal.value} color={goal.color} /></div>)}</div></Card><div className="space-y-5"><Card className="p-5 sm:p-6"><SectionTitle title="A week of consistency" /><div className="mt-3 flex items-end justify-between gap-2">{[1, 1, 0, 1, 1, 1, 0].map((active, i) => <div key={i} className="flex flex-1 flex-col items-center gap-2"><span className={cn("flex h-9 w-9 items-center justify-center rounded-full", active ? "bg-blue-50 text-blue-700" : "bg-slate-100 text-slate-300")}>{active ? <Check size={15} /> : <span className="h-1 w-1 rounded-full bg-slate-300" />}</span><span className="text-[9px] text-slate-400">{"MTWTFSS"[i]}</span></div>)}</div><p className="mt-4 text-[10px] leading-5 text-slate-500">You showed up on five days this week. That is a strong foundation to build on.</p></Card><Card className="p-5 sm:p-6"><SectionTitle title="Tasks completed" /><div className="flex items-center gap-4"><span className="text-[30px] font-bold tracking-tight text-slate-900">{complete}<span className="text-[15px] text-slate-400"> / {tasks.length}</span></span><span className="text-[10px] text-slate-500">planned sessions complete</span></div><div className="mt-3"><ProgressBar value={tasks.length ? (complete / tasks.length) * 100 : 0} /></div></Card></div></div>;
+}
+
+function Advisor({ messages, input, setInput, send }: { messages: { role: "assistant" | "user"; text: string }[]; input: string; setInput: (value: string) => void; send: (event?: FormEvent) => void }) {
+  const suggestions = ["Help me make a study plan", "How should I compare colleges?", "What engineering branches can I explore?"];
+  return <div className="mx-auto grid max-w-[1100px] gap-5 xl:grid-cols-[1.5fr_.8fr]"><Card className="flex min-h-[530px] flex-col overflow-hidden"><div className="flex items-center gap-3 border-b border-slate-100 px-5 py-4"><span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-sky-400 text-white"><BrainCircuit size={18} /></span><span className="flex-1"><span className="block text-[12px] font-semibold text-slate-800">Pathwise study advisor</span><span className="mt-0.5 flex items-center gap-1 text-[9px] text-emerald-600"><span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> Ready to help · demo</span></span><button className="rounded-lg p-2 text-slate-400 hover:bg-slate-50"><MoreHorizontal size={17} /></button></div><div className="thin-scrollbar flex-1 space-y-4 overflow-auto p-5">{messages.map((message, i) => <div key={i} className={cn("flex gap-2.5", message.role === "user" && "justify-end")}>
+      {message.role === "assistant" && <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-700"><Sparkles size={14} /></span>}
+      <p className={cn("max-w-[82%] rounded-2xl px-3.5 py-3 text-[10px] leading-5", message.role === "assistant" ? "rounded-tl-sm bg-slate-50 text-slate-600" : "rounded-tr-sm bg-blue-700 text-white")}>{message.text}</p>
+    </div>)}</div><form onSubmit={send} className="border-t border-slate-100 p-4"><div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white p-1.5 pl-3"><input value={input} onChange={(event) => setInput(event.target.value)} placeholder="Ask about studying, admissions, or careers..." className="min-w-0 flex-1 bg-transparent text-[10px] outline-none" /><button aria-label="Send message" className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-700 text-white hover:bg-blue-800"><Send size={14} /></button></div><p className="mt-2 text-center text-[8px] text-slate-400">Guidance is generated from simple demo responses and is not a substitute for official advice.</p></form></Card><div className="space-y-5"><Card className="p-5"><SectionTitle title="Try asking" /><div className="space-y-2">{suggestions.map((text) => <button key={text} onClick={() => { setInput(text); }} className="flex w-full items-center justify-between rounded-xl border border-slate-100 p-3 text-left text-[9px] leading-4 text-slate-600 transition hover:border-blue-200 hover:bg-blue-50/50">{text}<ArrowUpRight size={13} className="ml-2 shrink-0 text-blue-600" /></button>)}</div></Card><Card className="bg-amber-50/70 p-5"><div className="flex gap-2.5"><CircleHelp size={16} className="shrink-0 text-amber-600" /><div><h3 className="text-[10px] font-semibold text-amber-900">Verify important details</h3><p className="mt-1 text-[9px] leading-4 text-amber-800/80">Cutoffs, fees, scholarships, and admissions rules can change. Confirm them with official sources.</p></div></div></Card></div></div>;
+}
+
+function Careers() {
+  return <div><div className="mb-5 grid gap-4 md:grid-cols-3">{careers.map((career) => { const Icon = career.icon; return <Card key={career.title} className="p-5 transition hover:-translate-y-0.5 hover:shadow-md"><div className="flex items-start justify-between"><span className={cn("flex h-10 w-10 items-center justify-center rounded-xl", career.color === "blue" ? "bg-blue-50 text-blue-700" : career.color === "violet" ? "bg-violet-50 text-violet-700" : "bg-teal-50 text-teal-700")}><Icon size={19} /></span><span className="rounded-full bg-slate-50 px-2 py-1 text-[8px] font-semibold text-slate-500">{career.tag}</span></div><h2 className="mt-4 text-[13px] font-bold text-slate-800">{career.title}</h2><p className="mt-1.5 min-h-[48px] text-[10px] leading-5 text-slate-500">{career.description}</p><div className="mt-4 border-t border-slate-100 pt-3"><div className="mb-2 text-[8px] font-bold uppercase tracking-[.12em] text-slate-400">Skills to explore</div><div className="flex flex-wrap gap-1.5">{career.skills.map((skill) => <span key={skill} className="rounded-md bg-slate-100 px-2 py-1 text-[8px] font-medium text-slate-600">{skill}</span>)}</div></div><button className="mt-4 inline-flex items-center gap-1 text-[9px] font-semibold text-blue-700">Explore this path <ArrowRight size={12} /></button></Card>; })}</div><Card className="flex flex-wrap items-center justify-between gap-4 bg-[#eaf3ff] p-5 sm:p-6"><div className="flex items-center gap-3"><span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-blue-700"><Lightbulb size={19} /></span><div><h2 className="text-[12px] font-semibold text-slate-800">Not sure where to start?</h2><p className="mt-1 text-[10px] text-slate-500">Try a short project or talk to someone working in a field you like.</p></div></div><span className="rounded-xl bg-white px-3 py-2 text-[9px] font-medium text-blue-800">Curiosity is a good first step</span></Card></div>;
+}
+
+function Family({ recommended, priorities, setPriorities, selectedCollege, setSelectedCollege }: { recommended: (typeof colleges)[number][]; priorities: { affordability: number; location: number; branch: number; placements: number }; setPriorities: (value: typeof priorities) => void; selectedCollege: string; setSelectedCollege: (value: string) => void }) {
+  const labels: [keyof typeof priorities, string][] = [["affordability", "Affordability"], ["location", "Closer to home"], ["branch", "Preferred branch"], ["placements", "Placement outcomes"]];
+  return <div className="space-y-5"><Card className="overflow-hidden bg-gradient-to-r from-[#17355c] to-[#246fca] p-5 text-white sm:p-6"><div className="flex flex-wrap items-center justify-between gap-4"><div><div className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-white/10 px-2.5 py-1 text-[8px] font-semibold uppercase tracking-[.12em] text-blue-100"><Users size={11} /> Family decision space</div><h2 className="text-[18px] font-bold tracking-tight">A good choice makes room for everyone’s priorities.</h2><p className="mt-1 max-w-[600px] text-[10px] leading-5 text-blue-100/80">Adjust what matters most and use the shortlist as a starting point for a conversation.</p></div><span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10"><Heart size={22} /></span></div></Card>
+    <div className="grid gap-5 xl:grid-cols-[1.35fr_.8fr]"><Card className="p-5 sm:p-6"><div className="flex items-start justify-between"><div><SectionTitle title="College options to explore" /><p className="-mt-3 text-[9px] text-slate-400">Sample shortlist · estimates are illustrative.</p></div><span className="rounded-lg bg-blue-50 px-2.5 py-1.5 text-[9px] font-semibold text-blue-700">3 options</span></div><div className="mt-3 space-y-3">{recommended.map((college) => <button key={college.name} onClick={() => setSelectedCollege(college.name)} className={cn("w-full rounded-xl border p-4 text-left transition", selectedCollege === college.name ? "border-blue-400 bg-blue-50/40 shadow-sm" : "border-slate-200 hover:border-blue-200")}><div className="flex flex-wrap items-center justify-between gap-2"><div className="flex items-center gap-3"><span className="flex h-9 w-9 items-center justify-center rounded-lg text-[10px] font-bold text-white" style={{ backgroundColor: college.color }}>{college.name.split(" ").map((part) => part[0]).join("").slice(0, 3)}</span><span><span className="block text-[11px] font-semibold text-slate-800">{college.name}</span><span className="mt-0.5 block text-[9px] text-slate-400">{college.branch} · {college.place}</span></span></div><span className={cn("rounded-full px-2.5 py-1 text-[8px] font-semibold", college.chance === "Dream" ? "bg-amber-50 text-amber-700" : "bg-emerald-50 text-emerald-700")}>{college.chance}</span></div><div className="mt-4 grid grid-cols-3 gap-3 border-t border-slate-100 pt-3"><div><div className="text-[8px] text-slate-400">Fit score</div><div className="mt-1 text-[11px] font-bold text-slate-700">{college.fit}%</div></div><div><div className="text-[8px] text-slate-400">Indicative tuition / year</div><div className="mt-1 text-[11px] font-bold text-slate-700">{college.fee}</div></div><div><div className="text-[8px] text-slate-400">Your shortlist</div><div className="mt-1 text-[10px] font-semibold text-blue-700">{selectedCollege === college.name ? "Selected" : "Compare"}</div></div></div></button>)}</div><div className="mt-4 rounded-xl border border-amber-100 bg-amber-50/70 p-3 text-[9px] leading-4 text-amber-900"><ShieldCheck size={13} className="mr-1.5 inline" /> Cutoffs, fees, and chance labels in this demo are illustrative only. Check current official counselling information.</div></Card>
+      <Card className="p-5 sm:p-6"><SectionTitle title="What matters to you?" /><p className="-mt-3 mb-5 text-[9px] text-slate-400">Tune the priorities for this comparison.</p><div className="space-y-5">{labels.map(([key, label]) => <label key={key} className="block"><span className="mb-2 flex justify-between text-[9px]"><span className="font-medium text-slate-600">{label}</span><span className="font-bold text-blue-700">{priorities[key]}%</span></span><input aria-label={`${label} priority`} type="range" min="0" max="100" value={priorities[key]} onChange={(event) => setPriorities({ ...priorities, [key]: Number(event.target.value) })} className="h-1 w-full cursor-pointer accent-blue-600" /></label>)}</div><div className="mt-6 rounded-xl bg-slate-50 p-4"><div className="flex items-center gap-2 text-[10px] font-semibold text-slate-700"><MessageCircle size={14} className="text-blue-600" /> Family conversation starter</div><p className="mt-2 text-[9px] leading-5 text-slate-500">“Which one matters most to us right now: the branch, the cost, the location, or future opportunities?”</p></div></Card></div></div>;
+}
+
+function Wellbeing({ selectedMood, setSelectedMood, focusSeconds, setFocusSeconds, focusRunning, setFocusRunning }: { selectedMood: string; setSelectedMood: (value: string) => void; focusSeconds: number; setFocusSeconds: (value: number) => void; focusRunning: boolean; setFocusRunning: (value: boolean) => void }) {
+  const moods = ["Energized", "Good", "Okay", "Tired", "Overwhelmed"];
+  const time = `${String(Math.floor(focusSeconds / 60)).padStart(2, "0")}:${String(focusSeconds % 60).padStart(2, "0")}`;
+  return <div className="grid gap-5 xl:grid-cols-[1.1fr_1fr]"><Card className="p-5 sm:p-6"><div className="flex items-start justify-between"><div><SectionTitle title="Focus & break timer" /><p className="-mt-3 text-[9px] text-slate-400">A gentle structure for a focused study session.</p></div><span className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-700"><Timer size={18} /></span></div><div className="mt-5 flex flex-col items-center rounded-2xl bg-[#f4f7fb] px-5 py-8"><div className="flex h-[150px] w-[150px] flex-col items-center justify-center rounded-full border-[7px] border-blue-100 bg-white shadow-inner"><span className="text-[31px] font-bold tracking-tight text-blue-800">{time}</span><span className="mt-1 text-[9px] text-slate-400">{focusRunning ? "FOCUSING" : "READY WHEN YOU ARE"}</span></div><div className="mt-5 flex gap-2"><button onClick={() => setFocusRunning(!focusRunning)} className="rounded-xl bg-blue-700 px-5 py-2.5 text-[10px] font-semibold text-white hover:bg-blue-800">{focusRunning ? "Pause timer" : focusSeconds === 0 ? "Start again" : "Start focus"}</button><button onClick={() => { setFocusRunning(false); setFocusSeconds(25 * 60); }} className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-[10px] font-semibold text-slate-600 hover:bg-slate-50">Reset</button></div><p className="mt-4 text-center text-[8px] text-slate-400">Take a short break after your session. Stretch, hydrate, and rest your eyes.</p></div></Card>
+    <div className="space-y-5"><Card className="p-5 sm:p-6"><div className="flex items-start justify-between"><div><SectionTitle title="Daily balance check-in" /><p className="-mt-3 text-[9px] text-slate-400">How are you feeling about today?</p></div><Heart size={17} className="text-rose-500" /></div><div className="mt-4 grid grid-cols-5 gap-2">{moods.map((mood, i) => <button key={mood} onClick={() => setSelectedMood(mood)} className={cn("rounded-xl border px-1 py-2.5 text-center transition", selectedMood === mood ? "border-blue-300 bg-blue-50" : "border-slate-100 hover:bg-slate-50")}><span className="block text-[17px]">{["😊", "🙂", "😐", "😴", "😟"][i]}</span><span className="mt-1 block text-[7px] font-medium text-slate-500">{mood}</span></button>)}</div><div className="mt-4 rounded-xl bg-emerald-50/70 p-3 text-[9px] leading-4 text-emerald-900"><Check size={13} className="mr-1 inline" /> Check-in saved for this session: feeling {selectedMood.toLowerCase()}.</div></Card><Card className="p-5 sm:p-6"><SectionTitle title="Small habits, real support" /><div className="mt-3 grid gap-3 sm:grid-cols-2">{[{ title: "Take a screen break", text: "Look away from your screen between sessions." }, { title: "Keep water close", text: "A simple reminder to stay hydrated." }, { title: "Protect your sleep", text: "Rest helps you learn and remember." }, { title: "Ask for support", text: "Talk with someone you trust when stress builds." }].map((item, i) => <div key={item.title} className="rounded-xl bg-slate-50 p-3"><div className="flex items-center gap-2 text-[9px] font-semibold text-slate-700"><span className={cn("flex h-6 w-6 items-center justify-center rounded-lg", i === 3 ? "bg-rose-50 text-rose-600" : "bg-white text-blue-600")}><Heart size={12} /></span>{item.title}</div><p className="mt-2 text-[8px] leading-4 text-slate-500">{item.text}</p></div>)}</div><p className="mt-3 text-[8px] text-slate-400">This is general wellbeing support, not medical or psychological care.</p></Card></div></div>;
+}
+
+function Resources({ items, query, setQuery, saved, toggle }: { items: typeof resources; query: string; setQuery: (value: string) => void; saved: string[]; toggle: (title: string) => void }) {
+  const colors: Record<string, string> = { blue: "bg-blue-50 text-blue-700", violet: "bg-violet-50 text-violet-700", amber: "bg-amber-50 text-amber-700", teal: "bg-teal-50 text-teal-700", rose: "bg-rose-50 text-rose-700", green: "bg-emerald-50 text-emerald-700" };
+  return <div><Card className="mb-5 p-4 sm:p-5"><div className="grid gap-3 md:grid-cols-[1.6fr_1fr_1fr]"><label className="flex h-10 items-center gap-2 rounded-xl border border-slate-200 px-3"><Search size={14} className="text-slate-400" /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search topic, exam, or resource..." className="min-w-0 flex-1 text-[10px] outline-none" /></label><select className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-[10px] text-slate-500"><option>All subjects</option><option>Admissions</option><option>Study guides</option><option>Careers</option></select><select className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-[10px] text-slate-500"><option>All access types</option><option>Free resources</option><option>Saved</option></select></div></Card><div className="mb-4 flex items-center justify-between"><span className="text-[10px] text-slate-400">{items.length} practical guides <span className="mx-1">·</span> {saved.length} saved</span><button className="text-[9px] font-semibold text-blue-700">Recently added <ChevronDown size={11} className="ml-1 inline" /></button></div><div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">{items.map((item) => { const Icon = item.icon; const isSaved = saved.includes(item.title); return <Card key={item.title} className="p-5 transition hover:-translate-y-0.5 hover:shadow-md"><div className="flex items-start justify-between"><span className={cn("flex h-9 w-9 items-center justify-center rounded-xl", colors[item.color])}><Icon size={17} /></span><button aria-label={isSaved ? "Remove saved resource" : "Save resource"} onClick={() => toggle(item.title)} className={cn("rounded-lg p-1.5", isSaved ? "text-blue-700" : "text-slate-300 hover:text-blue-600")}><Heart size={15} fill={isSaved ? "currentColor" : "none"} /></button></div><span className="mt-4 inline-block rounded-full bg-slate-50 px-2 py-1 text-[8px] font-semibold text-slate-500">{item.type}</span><h2 className="mt-2 text-[11px] font-semibold text-slate-800">{item.title}</h2><div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-3"><span className="text-[8px] text-slate-400">{item.read} read <span className="mx-1">·</span> Free</span><button className="text-[9px] font-semibold text-blue-700">Open resource <ArrowUpRight size={11} className="ml-1 inline" /></button></div></Card>; })}</div>{items.length === 0 && <div className="rounded-2xl border border-dashed border-slate-300 bg-white py-12 text-center"><Search size={20} className="mx-auto text-slate-300" /><p className="mt-3 text-[11px] font-semibold text-slate-600">No resources match that search.</p><button onClick={() => setQuery("")} className="mt-2 text-[9px] font-semibold text-blue-700">Clear search</button></div>}</div>;
 }
