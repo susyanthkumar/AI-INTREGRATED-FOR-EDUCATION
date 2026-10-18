@@ -147,7 +147,7 @@ export default function HomePage() {
   const activeInfo = titleFor[view];
 
   return (
-    <div className="min-h-screen bg-[#f4f7fb] text-slate-800">
+    <div className="theme-dark min-h-screen bg-[#090a0c] text-slate-100">
       {mobileNav && <button aria-label="Close menu overlay" onClick={() => setMobileNav(false)} className="fixed inset-0 z-30 bg-slate-950/35 lg:hidden" />}
       <aside className={cn("fixed inset-y-0 left-0 z-40 flex w-[258px] flex-col bg-[#142744] text-slate-200 transition-transform duration-300 lg:translate-x-0", mobileNav ? "translate-x-0" : "-translate-x-full")}>
         <div className="flex h-[76px] items-center justify-between border-b border-white/10 px-6">
@@ -182,7 +182,7 @@ export default function HomePage() {
       </aside>
 
       <main className="min-h-screen lg:ml-[258px]">
-        <header className="sticky top-0 z-20 flex h-[76px] items-center justify-between border-b border-slate-200/80 bg-white/90 px-4 backdrop-blur-xl sm:px-7 lg:px-9">
+        <header className="site-header sticky top-0 z-20 flex h-[76px] items-center justify-between border-b border-white/10 bg-[#090a0c]/95 px-4 backdrop-blur-xl sm:px-7 lg:px-9">
           <div className="flex items-center gap-3"><button aria-label="Open navigation" onClick={() => setMobileNav(true)} className="rounded-lg p-2 text-slate-600 hover:bg-slate-100 lg:hidden"><Menu size={20} /></button><div><div className="text-[10px] font-medium text-slate-400">Pathwise <span className="mx-1 text-slate-300">/</span> <span className="text-slate-600">{navigation.find((item) => item.id === view)?.label}</span></div><div className="mt-0.5 hidden text-[12px] font-semibold text-slate-700 sm:block">Engineering journey <ChevronDown size={13} className="ml-1 inline text-slate-400" /></div></div></div>
           <div className="flex items-center gap-2 sm:gap-4">
             <label className="hidden h-9 w-[205px] items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 md:flex"><Search size={14} className="text-slate-400" /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search resources..." className="min-w-0 flex-1 bg-transparent text-[11px] outline-none placeholder:text-slate-400" /><kbd className="rounded border border-slate-200 bg-white px-1 text-[9px] text-slate-400">⌘ K</kbd></label>
@@ -194,7 +194,7 @@ export default function HomePage() {
 
         <div className="mx-auto max-w-[1480px] px-4 pb-10 pt-6 sm:px-7 lg:px-9 lg:pt-8">
           <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
-            <div><div className="mb-1.5 flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[.13em] text-blue-700"><span className="h-1.5 w-1.5 rounded-full bg-blue-500" /> YOUR PATH, AT YOUR PACE</div><h1 className="text-[25px] font-bold tracking-[-.04em] text-slate-900 sm:text-[29px]">{activeInfo.title}</h1><p className="mt-1 text-[12px] text-slate-500">{activeInfo.subtitle}</p></div>
+            <div><div className="mb-1.5 flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[.17em] text-orange-400"><span className="h-1.5 w-1.5 rounded-full bg-orange-500" /> YOUR PATH, AT YOUR PACE</div><h1 className="page-title text-[25px] font-bold tracking-[-.04em] text-slate-100 sm:text-[29px]">{activeInfo.title}</h1><p className="mt-1 text-[12px] text-slate-400">{activeInfo.subtitle}</p></div>
             <div className="flex items-center gap-2"><button onClick={() => go("planner")} className="hidden items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-[11px] font-semibold text-slate-600 shadow-sm transition hover:border-blue-200 hover:text-blue-700 sm:flex"><CalendarDays size={14} /> This week <ChevronDown size={13} /></button><button onClick={() => go("family")} className="inline-flex items-center gap-2 rounded-xl bg-blue-700 px-3.5 py-2.5 text-[11px] font-semibold text-white shadow-md shadow-blue-700/15 transition hover:bg-blue-800"><Users size={14} /> Family view</button></div>
           </div>
 
@@ -218,6 +218,19 @@ export default function HomePage() {
 function Overview({ go, tasks, setTasks }: { go: (view: View) => void; tasks: StudyTask[]; setTasks: (value: (tasks: StudyTask[]) => StudyTask[]) => void }) {
   const openTasks = tasks.filter((task) => !task.done).length;
   return <div className="space-y-5">
+    <section className="editorial-hero relative isolate flex min-h-[300px] items-end overflow-hidden rounded-[26px] border border-white/10 px-6 py-7 sm:min-h-[340px] sm:px-10 sm:py-9 lg:items-center">
+      <div className="relative z-10 max-w-[560px]">
+        <span className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/15 bg-black/25 px-3 py-1.5 text-[9px] font-semibold uppercase tracking-[.16em] text-orange-300"><Sparkles size={12} /> A clearer path to what comes next</span>
+        <h2 className="editorial-heading max-w-[560px] text-[36px] leading-[1.04] text-white sm:text-[48px] lg:text-[54px]">Your future is built one good decision at a time.</h2>
+        <p className="mt-4 max-w-[430px] text-[12px] leading-6 text-slate-300">Make space for the big picture. Find your next study step, explore engineering careers, and plan college choices together.</p>
+        <div className="mt-6 flex flex-wrap gap-3">
+          <button onClick={() => go("planner")} className="rounded-md bg-[#f05b3f] px-4 py-3 text-[10px] font-bold text-white transition hover:bg-[#ff704f]">Explore your study plan</button>
+          <button onClick={() => go("family")} className="rounded-md border border-white/65 bg-black/20 px-4 py-3 text-[10px] font-semibold text-white transition hover:border-white hover:bg-white/10">Plan as a family</button>
+        </div>
+      </div>
+      <div aria-hidden="true" className="editorial-orbit absolute -right-10 -top-14 hidden h-[370px] w-[370px] rounded-full border border-white/10 lg:block" />
+      <div aria-hidden="true" className="absolute right-[6%] top-[12%] hidden h-[76%] w-[34%] rounded-[48%_48%_22%_22%] border border-white/10 bg-gradient-to-b from-white/10 to-transparent lg:block" />
+    </section>
     <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
       <StatCard icon={Activity} label="Study time this week" value="8.5 hrs" note="+1.5 hrs from last week" change="up" color="blue" bars={[32, 45, 36, 66, 48, 82, 55]} />
       <StatCard icon={Target} label="Weekly goal" value="71%" note="3.5 hours left to your goal" change="up" color="teal" bars={[25, 37, 48, 44, 62, 75, 71]} />
